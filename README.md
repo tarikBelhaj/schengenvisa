@@ -1,198 +1,108 @@
 # Schengen 90/180
 
-Suivi de la règle Schengen des 90 jours sur 180, en **fenêtre glissante**, pour
-soi et ses proches. Chaque compte Google ne voit que ses propres personnes et
-séjours.
+Suivi des séjours dans l'espace Schengen, en fenêtre glissante, pour soi et ses
+proches. Chaque compte Google ne voit que ses propres données.
 
-Next.js 14 (App Router) · TypeScript · Tailwind · Prisma · PostgreSQL · NextAuth (Google).
+Next.js 14 (App Router) · TypeScript · Tailwind · Prisma · PostgreSQL · NextAuth · FR/EN
 
----
+## La règle
 
-## La règle, et pourquoi le calcul naïf se trompe
+90 jours de présence maximum sur toute période de 180 jours consécutifs. La
+fenêtre glisse : chaque jour qui passe fait sortir un jour ancien, ce qui libère
+du crédit.
 
-Un ressortissant soumis à la règle ne peut pas passer plus de **90 jours** dans
-l'espace Schengen sur **toute période de 180 jours consécutifs**. Ce n'est pas
-un quota annuel ni un compteur qui se remet à zéro : la fenêtre glisse. Chaque
-jour qui passe fait sortir un jour ancien par la gauche, ce qui **libère du
-crédit**.
-
-Conséquence concrète, et c'est tout l'intérêt de l'app : après 40 jours passés
-en janvier–février, un calcul naïf annonce « il vous reste 50 jours ». En
-réalité, une entrée le 1er juin permet de rester **90 jours pleins** — parce que
-les 40 jours de janvier sortent de la fenêtre pendant le séjour. Ce cas est
-couvert par un test (`src/lib/schengen.test.ts`).
+D'où le piège du calcul naïf : après 40 jours en janvier–février, `90 − 40 = 50`
+est faux. Une entrée le 1er juin permet 90 jours pleins, parce que l'historique
+sort de la fenêtre pendant le séjour. Cas couvert par les tests.
 
 Conventions retenues :
 
-- fenêtre = `[referenceDate − 179, referenceDate]`, soit 180 jours bornes incluses ;
-- un séjour compte **le jour d'entrée et le jour de sortie** ;
-- les séjours **planifiés comptent comme les passés** ;
-- `exitDate` vide = séjour en cours, borné à la date de référence ;
-- deux séjours qui se chevauchent ne comptent leurs jours communs qu'une fois.
+- fenêtre = `[ref − 179, ref]`, 180 jours bornes incluses
+- entrée et sortie comptent toutes les deux
+- les séjours planifiés comptent comme les passés
+- `exitDate` vide = séjour en cours, borné à la date de référence
+- les chevauchements ne comptent leurs jours communs qu'une fois
 
----
+## Installation
 
-## Démarrage
+Il faut une base PostgreSQL ([Neon](https://neon.tech) ou
+[Supabase](https://supabase.com) en tier gratuit) et un client OAuth Google.
 
-### 1. Une base PostgreSQL
-
-Un tier gratuit suffit largement pour une dizaine d'utilisateurs :
-
-- **[Neon](https://neon.tech)** — `DATABASE_URL` = l'URL *poolée* (`-pooler` dans
-  le nom d'hôte), `DIRECT_URL` = l'URL directe.
-- **[Supabase](https://supabase.com)** — `DATABASE_URL` = port `6543` (pooler),
-  `DIRECT_URL` = port `5432`.
-
-Les migrations Prisma ne passent pas par le pooler : d'où les deux variables.
-
-### 2. Identifiants Google OAuth
-
-[console.cloud.google.com](https://console.cloud.google.com) → *API et services*
-→ *Identifiants* → **ID client OAuth** (type « Application Web »).
-
-URI de redirection autorisée :
-
-```
-http://localhost:3000/api/auth/callback/google            # en local
-https://<votre-app>.vercel.app/api/auth/callback/google   # en production
+```bash
+cp .env.example .env      # puis remplir
+npm install
+npx prisma migrate deploy
+npm run db:seed           # optionnel
+npm run dev
 ```
 
-### 3. Variables d'environnement
+URI de redirection à déclarer côté Google :
+`<NEXTAUTH_URL>/api/auth/callback/google`
 
-Copiez `.env.example` vers `.env` et remplissez-le :
+### Variables
 
 | Variable | Rôle |
 | --- | --- |
-| `DATABASE_URL` | Connexion applicative (poolée) |
-| `DIRECT_URL` | Connexion directe, pour les migrations |
-| `NEXTAUTH_URL` | `http://localhost:3000` en local, l'URL du déploiement en prod |
+| `DATABASE_URL` | connexion applicative (poolée en production) |
+| `DIRECT_URL` | connexion directe, pour les migrations |
+| `NEXTAUTH_URL` | URL du site |
 | `NEXTAUTH_SECRET` | `openssl rand -base64 32` |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Identifiants OAuth |
-| `ALLOWED_EMAILS` | *Optionnel.* Liste blanche `a@x.com,b@y.com`. Vide = tout compte Google |
-| `SEED_USER_EMAIL` | Adresse Google du compte créé par le seed |
-
-`ALLOWED_EMAILS` est la manière la plus simple de garder l'app privée : toute
-adresse absente de la liste se voit refuser la connexion.
-
-### 4. Installer, migrer, démarrer
-
-```bash
-npm install
-npx prisma migrate dev     # applique prisma/migrations/0_init
-npm run db:seed            # 2 personnes de démonstration (optionnel)
-npm run dev                # http://localhost:3000
-```
-
-Sur une base **déjà créée** (Neon/Supabase en prod), utilisez plutôt :
-
-```bash
-npx prisma migrate deploy
-```
-
----
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | identifiants OAuth |
+| `ALLOWED_EMAILS` | liste blanche `a@x.com,b@y.com`. Vide = tout compte Google |
+| `SEED_USER_EMAIL` | compte auquel rattacher les données de démo |
 
 ## Scripts
 
-| Commande | Effet |
+| | |
 | --- | --- |
-| `npm run dev` | Serveur de développement |
-| `npm run build` | `prisma generate` puis build de production |
-| `npm test` | Tests Vitest du calcul 90/180 |
-| `npm run test:watch` | Tests en continu |
+| `npm run dev` | serveur de développement |
+| `npm run build` | `prisma generate` puis build |
+| `npm test` | tests du calcul 90/180 |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run db:migrate` | `prisma migrate dev` |
-| `npm run db:seed` | Jeu de démonstration |
-| `npm run db:studio` | Explorateur de base Prisma |
-
----
-
-## Le seed
-
-`npm run db:seed` crée un `User` portant l'adresse `SEED_USER_EMAIL`, puis deux
-personnes. À votre première connexion avec **ce même compte Google**, la session
-se rattache à cet utilisateur et les données de démonstration apparaissent.
-
-- **Yasmine Haddad** — un séjour sorti de la fenêtre, un séjour récent, un séjour
-  planifié qui tient dans le quota.
-- **Karim Belhadj** — 61 jours encore dans la fenêtre plus un séjour planifié de
-  46 jours : **dépassement volontaire**, pour voir l'alerte et le drapeau rouge.
-
-Le seed est idempotent : il supprime les personnes existantes de cet utilisateur
-avant de recréer le jeu. Les dates sont relatives au jour où on le lance.
-
----
+| `npm run db:seed` | jeu de démonstration |
+| `npm run db:studio` | explorateur Prisma |
 
 ## Structure
 
 ```
-prisma/
-  schema.prisma            User · Person · Trip (+ tables NextAuth)
-  migrations/0_init/       migration initiale
-  seed.ts
-src/
-  lib/
-    dates.ts               dates pures UTC (numéros de jour, zéro fuseau)
-    schengen.ts            LE calcul — daysPresentInWindow, maxStayFromEntry…
-    schengen.test.ts       37 tests
-    auth.ts                NextAuth + liste blanche
-    data.ts                requêtes cloisonnées par userId
-    prisma.ts
-  app/
-    page.tsx               landing
-    login/                 connexion Google
-    dashboard/             liste des personnes + statuts
-    person/[id]/           fiche : jauge, timeline, simulateur
-    actions.ts             server actions (CRUD personnes et séjours)
-  components/
-    Gauge.tsx  Timeline.tsx  Simulator.tsx  TripForm.tsx  PersonForm.tsx
+prisma/          schema, migrations, seed
+src/lib/
+  dates.ts       dates UTC en numéros de jour
+  schengen.ts    le calcul
+  auth.ts        NextAuth + liste blanche
+  data.ts        requêtes cloisonnées par userId
+src/i18n/        dictionnaires FR/EN
+src/app/         landing, login, dashboard, person/[id], actions
+src/components/  Gauge, WindowBar, Timeline, Simulator, formulaires
 ```
 
-### L'API de calcul
+### API de calcul
 
 ```ts
-daysPresentInWindow(trips, referenceDate)  // jours consommés dans la fenêtre
-daysRemaining(trips, referenceDate)        // 90 − consommés (négatif = dépassement)
-maxStayFromEntry(trips, entryDate)         // { maxExitDate, allowedDays, daysUsedAtEntry }
-findFirstOverage(trips, referenceDate)     // premier jour de dépassement, ou null
-nextPlannedTrip(trips, referenceDate)      // prochain séjour à venir
+daysPresentInWindow(trips, ref)   // jours consommés dans la fenêtre
+daysRemaining(trips, ref)         // 90 − consommés, négatif si dépassement
+maxStayFromEntry(trips, entry)    // { maxExitDate, allowedDays, daysUsedAtEntry }
+findFirstOverage(trips, ref)      // premier jour de dépassement, ou null
+nextPlannedTrip(trips, ref)       // prochain séjour à venir
 ```
 
-`maxStayFromEntry` répond à la question centrale — « si j'entre le 1er décembre,
-jusqu'à quand puis-je rester ? ». Elle avance jour par jour depuis l'entrée et
-**recalcule la fenêtre à chaque date**, en comptant les jours simulés plus tous
-les séjours enregistrés. C'est ce recalcul pas à pas qui capte la libération de
-crédit décrite plus haut.
+Fonctions pures, sans dépendance : le simulateur les exécute côté client.
 
-Toutes ces fonctions sont pures : le simulateur les exécute dans le navigateur,
-la réponse est instantanée.
+## Cloisonnement
 
----
+Le `userId` de session entre dans le `where` de chaque lecture, et chaque
+écriture vérifie la propriété de la personne au préalable. `ALLOWED_EMAILS`
+filtre en amont qui peut se connecter.
 
-## Cloisonnement des données
+## Déploiement
 
-- Chaque `Person` porte un `userId`. Toute lecture le met dans le `where`
-  (`src/lib/data.ts`) : un identifiant deviné ne renvoie rien.
-- Chaque écriture passe par `assertOwnsPerson` avant de toucher la base, et les
-  mises à jour de séjours filtrent sur `personId` (`src/app/actions.ts`).
-- La liste blanche `ALLOWED_EMAILS` filtre en amont qui peut se connecter.
-
----
-
-## Déploiement Vercel
-
-1. Poussez le dépôt sur GitHub, puis importez-le sur Vercel.
-2. Renseignez les variables d'environnement du tableau ci-dessus.
-   `NEXTAUTH_URL` doit valoir l'URL de production.
-3. Ajoutez l'URI de redirection de production dans la console Google.
-4. Le build lance `prisma generate` (scripts `postinstall` et `build`).
-5. Appliquez les migrations une fois : `npx prisma migrate deploy` avec le
-   `DATABASE_URL` de production.
-
----
+Vercel. Renseigner les variables ci-dessus, `NEXTAUTH_URL` valant l'URL de
+production, `DATABASE_URL` la connexion poolée. Ajouter l'URI de redirection de
+production côté Google. Le build lance `prisma generate`.
 
 ## Limites
 
-Outil de suivi personnel. Le calcul suit la règle générale 90/180 et **ne tient
-pas compte** des visas long séjour, titres de séjour, accords bilatéraux ni des
-statuts particuliers qui suspendent ou remplacent la règle. Ne remplace pas
-l'avis d'une autorité consulaire.
+Le calcul suit la règle générale 90/180 et ne tient pas compte des visas long
+séjour, titres de séjour ou accords bilatéraux. Ne remplace pas l'avis d'une
+autorité consulaire.

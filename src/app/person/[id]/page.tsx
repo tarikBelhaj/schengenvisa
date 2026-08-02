@@ -123,7 +123,6 @@ export default async function PersonPage({ params }: { params: { id: string } })
             </section>
           </div>
 
-          {/* Colonne latérale : le simulateur, toujours visible */}
           <div className="space-y-6">
             <Simulator
               personName={person.name}

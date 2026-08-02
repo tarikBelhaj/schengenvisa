@@ -1,4 +1,3 @@
-// Schengen 90/180 tracker — schéma Prisma
 // Auth : Google OAuth uniquement (NextAuth v4 + @auth/prisma-adapter)
 
 generator client {
@@ -8,14 +7,11 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  // Neon / Supabase : DATABASE_URL est l'URL poolée (pgbouncer),
-  // DIRECT_URL l'URL directe utilisée par `prisma migrate`.
+  // DATABASE_URL poolée, DIRECT_URL directe pour les migrations.
   directUrl = env("DIRECT_URL")
 }
 
-// ---------------------------------------------------------------------------
 // NextAuth
-// ---------------------------------------------------------------------------
 
 model User {
   id            String    @id @default(cuid())
@@ -69,9 +65,7 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ---------------------------------------------------------------------------
-// Domaine métier
-// ---------------------------------------------------------------------------
+// Métier
 
 model Person {
   id          String   @id @default(cuid())
@@ -96,9 +90,9 @@ enum TripStatus {
 model Trip {
   id       String     @id @default(cuid())
   personId String
-  // Dates pures (pas d'heure) : @db.Date évite tout décalage de fuseau.
+  // @db.Date : pas d'heure, donc pas de décalage de fuseau.
   entryDate DateTime  @db.Date
-  // null = séjour en cours (sortie inconnue).
+  // null = séjour en cours
   exitDate  DateTime? @db.Date
   status    TripStatus
   country   String?

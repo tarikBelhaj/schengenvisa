@@ -3,10 +3,7 @@ import type { Dict } from '@/i18n/dictionaries';
 import { formatDate, type DateInput } from '@/lib/dates';
 import { MAX_DAYS, windowRange } from '@/lib/schengen';
 
-/**
- * Palier de couleur. Le bleu est l'état normal ; l'ambre signale une fenêtre
- * qui se remplit, le rouge un dépassement.
- */
+// Bleu normal, ambre au-delà de 75 j, rouge en dépassement.
 export function gaugeTone(daysUsed: number) {
   if (daysUsed > MAX_DAYS) {
     return { from: '#f43f5e', to: '#fb7185', text: 'text-rose-600' };
@@ -23,7 +20,7 @@ interface GaugeProps {
   dict: Dict;
   locale: Locale;
   size?: number;
-  /** Masque les bornes de la fenêtre sous l'anneau. */
+  /** Masque les bornes de la fenêtre. */
   bare?: boolean;
 }
 
@@ -105,7 +102,6 @@ export default function Gauge({
   );
 }
 
-/** Version une ligne pour la liste des personnes. */
 export function GaugeBar({ daysUsed, dict }: { daysUsed: number; dict: Dict }) {
   const remaining = MAX_DAYS - daysUsed;
   const tone = gaugeTone(daysUsed);

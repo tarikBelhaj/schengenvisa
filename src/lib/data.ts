@@ -2,10 +2,7 @@ import { prisma } from './prisma';
 import { toIsoDate } from './dates';
 import type { TripStatus } from './schengen';
 
-/**
- * Objets sérialisables passés aux composants client : les dates y sont des
- * chaînes "YYYY-MM-DD", jamais des Date — pas d'heure, donc pas de fuseau.
- */
+// Dates en "YYYY-MM-DD" et non en Date : sérialisable, et pas de fuseau.
 export interface TripDTO {
   id: string;
   entryDate: string;

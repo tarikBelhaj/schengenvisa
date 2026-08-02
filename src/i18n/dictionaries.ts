@@ -1,13 +1,7 @@
 import type { Locale } from './config';
 
-/**
- * Toutes les chaînes visibles par l'utilisateur.
- *
- * Les valeurs sont des chaînes plates : `fmt()` y injecte les variables. Cela
- * les garde sérialisables, condition pour les passer à un composant client.
- * Le français fait foi — `Dict` en dérive, donc une clé oubliée en anglais
- * casse la compilation.
- */
+// Le français fait foi : Dict en dérive, donc une clé oubliée en anglais
+// casse la compilation.
 const fr = {
   common: {
     days: 'jours',

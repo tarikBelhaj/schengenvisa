@@ -16,12 +16,7 @@ interface SimulatorProps {
   locale: Locale;
 }
 
-/**
- * « Si [Person] entre le 1er décembre, jusqu'à quand peut-elle rester ? »
- *
- * Le calcul est pur et sans dépendance : il tourne dans le navigateur, la
- * réponse est instantanée à chaque changement de date.
- */
+// Le calcul est pur, il tourne côté client : réponse instantanée.
 export default function Simulator({ personName, trips, dict, locale }: SimulatorProps) {
   const [entryDate, setEntryDate] = useState(() => toIsoDate(todayUtc()));
 
@@ -38,7 +33,6 @@ export default function Simulator({ personName, trips, dict, locale }: Simulator
 
   return (
     <section className="overflow-hidden rounded-3xl bg-white shadow-card">
-      {/* Panneau de résultat : le chiffre d'abord, la saisie ensuite. */}
       <div
         className={`px-6 py-7 text-center ${
           impossible

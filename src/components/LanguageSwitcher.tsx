@@ -3,10 +3,7 @@ import { LOCALES, type Locale } from '@/i18n/config';
 
 const NAMES: Record<Locale, string> = { fr: 'FR', en: 'EN' };
 
-/**
- * Deux boutons dans un formulaire : le changement de langue passe par une
- * server action, donc il fonctionne même sans JavaScript.
- */
+// Server action plutôt qu'un onClick : marche sans JavaScript.
 export default function LanguageSwitcher({ current }: { current: Locale }) {
   return (
     <form action={setLocale} className="flex items-center rounded-full bg-white p-1 shadow-sm">

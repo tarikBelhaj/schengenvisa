@@ -5,10 +5,7 @@ import GoogleProvider from 'next-auth/providers/google';
 
 import { prisma } from './prisma';
 
-/**
- * Liste blanche optionnelle : l'app est privée, quelques proches seulement.
- * ALLOWED_EMAILS="a@x.com,b@y.com" — vide ou absent = tout compte Google passe.
- */
+// ALLOWED_EMAILS="a@x.com,b@y.com". Vide = tout compte Google passe.
 const allowedEmails = (process.env.ALLOWED_EMAILS ?? '')
   .split(',')
   .map((e) => e.trim().toLowerCase())
@@ -20,8 +17,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-      // Google vérifie ses adresses : on accepte de rattacher la connexion à un
-      // User existant de même email (utile pour le compte créé par le seed).
+      // Google vérifie ses adresses : on rattache à un User de même email.
       allowDangerousEmailAccountLinking: true,
     }),
   ],
@@ -33,7 +29,7 @@ export const authOptions: NextAuthOptions = {
       return !!user.email && allowedEmails.includes(user.email.toLowerCase());
     },
     session({ session, user }) {
-      // L'id est la clé de l'isolation multi-utilisateur : on l'expose partout.
+      // L'id porte l'isolation entre comptes.
       if (session.user) session.user.id = user.id;
       return session;
     },
@@ -44,7 +40,6 @@ export function auth() {
   return getServerSession(authOptions);
 }
 
-/** Session garantie, ou null. À utiliser dans chaque page/action protégée. */
 export async function requireUserId(): Promise<string | null> {
   const session = await auth();
   return session?.user?.id ?? null;

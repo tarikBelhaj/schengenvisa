@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-// En dev, le hot-reload recrée un client à chaque rechargement : on le mémorise
-// sur globalThis pour ne pas saturer le pool de connexions.
+// Le hot-reload recréerait un client à chaque rechargement.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =

@@ -50,9 +50,8 @@ export default function Timeline({ personId, trips, dict, locale }: TimelineProp
         const over = loadAtExit > MAX_DAYS;
         const future = toEpochDay(trip.entryDate) > todayDay;
 
-        // Pour un séjour à venir : jusqu'à quand cette entrée autorise-t-elle
-        // de rester ? Inclure le séjour lui-même est sans effet — ses jours
-        // font déjà partie de la simulation, et l'union ne les compte qu'une fois.
+        // Inclure le séjour lui-même est sans effet : ses jours sont déjà
+        // dans la simulation et l'union ne les compte qu'une fois.
         const stay = isPlanned || future ? maxStayFromEntry(trips, trip.entryDate) : null;
         const plannedExitDay = trip.exitDate ? toEpochDay(trip.exitDate) : null;
         const excess =
@@ -89,7 +88,7 @@ export default function Timeline({ personId, trips, dict, locale }: TimelineProp
                   )}
                 </div>
 
-                {/* 10px de pastille + 8px de gouttière : le texte s'aligne dessous. */}
+                {/* aligné sous le texte, pastille + gouttière */}
                 <p className="mt-1.5 pl-[18px] text-sm text-slate-500">
                   <span className="font-semibold text-slate-700 tabular-nums">
                     {duration} {locale === 'en' ? 'd' : 'j'}
@@ -119,7 +118,6 @@ export default function Timeline({ personId, trips, dict, locale }: TimelineProp
               </form>
             </div>
 
-            {/* Réponse directe : jusqu'à quand ce séjour peut-il durer ? */}
             {stay && (
               <div
                 className={`mt-3 rounded-2xl px-4 py-3 ${

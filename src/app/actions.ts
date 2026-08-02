@@ -15,7 +15,6 @@ export interface ActionState {
   error?: string;
 }
 
-/** Change la langue. Le cookie est lu par chaque page côté serveur. */
 export async function setLocale(formData: FormData): Promise<void> {
   const value = formData.get('locale');
   if (!isLocale(value)) return;
@@ -25,7 +24,7 @@ export async function setLocale(formData: FormData): Promise<void> {
     path: '/',
     sameSite: 'lax',
   });
-  // Toutes les pages rendent du texte traduit : on invalide l'arbre entier.
+  // Tout l'arbre rend du texte traduit.
   revalidatePath('/', 'layout');
 }
 
@@ -37,8 +36,8 @@ const optionalText = z
   .optional()
   .transform((v) => (v ? v : null));
 
-// Les schémas sont construits par appel : leurs messages dépendent de la langue
-// courante, qui n'est connue qu'au moment de la requête.
+// Schémas construits par appel : les messages dépendent de la langue,
+// connue seulement au moment de la requête.
 type Errors = ReturnType<typeof getDict>['errors'];
 
 function personSchema(e: Errors) {
@@ -67,14 +66,12 @@ function tripSchema(e: Errors) {
     });
 }
 
-/** Le userId de la session, ou une redirection : aucune action sans session. */
 async function currentUserId(): Promise<string> {
   const userId = await requireUserId();
   if (!userId) redirect('/login');
   return userId;
 }
 
-/** Vérifie que la personne appartient bien à l'utilisateur connecté. */
 async function assertOwnsPerson(userId: string, personId: string): Promise<void> {
   const found = await prisma.person.findFirst({ where: { id: personId, userId }, select: { id: true } });
   if (!found) throw new Error(getDict().errors.personNotFound);
@@ -83,10 +80,6 @@ async function assertOwnsPerson(userId: string, personId: string): Promise<void>
 function firstError(error: z.ZodError, e: Errors): string {
   return error.issues[0]?.message ?? e.invalid;
 }
-
-// ---------------------------------------------------------------------------
-// Personnes
-// ---------------------------------------------------------------------------
 
 export async function savePerson(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await currentUserId();
@@ -119,15 +112,11 @@ export async function deletePerson(formData: FormData): Promise<void> {
   const id = String(formData.get('id') ?? '');
   await assertOwnsPerson(userId, id);
 
-  // onDelete: Cascade côté Prisma supprime les séjours associés.
+  // Cascade Prisma : les séjours partent avec.
   await prisma.person.delete({ where: { id } });
   revalidatePath('/dashboard');
   redirect('/dashboard');
 }
-
-// ---------------------------------------------------------------------------
-// Séjours
-// ---------------------------------------------------------------------------
 
 export async function saveTrip(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await currentUserId();
@@ -150,12 +139,11 @@ export async function saveTrip(_prev: ActionState, formData: FormData): Promise<
   const data = {
     ...rest,
     entryDate: toUtcDate(entryDate),
-    // Champ vide = séjour en cours, sortie inconnue.
     exitDate: exitDate ? toUtcDate(exitDate) : null,
   };
 
   if (id) {
-    // Le personId du where garantit qu'on n'édite pas le séjour d'un autre.
+    // personId dans le where : pas d'édition croisée entre personnes.
     const updated = await prisma.trip.updateMany({ where: { id, personId }, data });
     if (updated.count === 0) return { error: e.tripNotFound };
   } else {

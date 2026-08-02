@@ -11,10 +11,7 @@ import { auth } from '@/lib/auth';
 import { addDays, formatDate, todayUtc } from '@/lib/dates';
 import { daysPresentInWindow, maxStayFromEntry, type TripLike } from '@/lib/schengen';
 
-/**
- * Démonstration calculée avec les vraies fonctions : les chiffres affichés sur
- * la landing sont ceux que l'app produirait pour ces séjours.
- */
+// Chiffres produits par les vraies fonctions, pas des valeurs en dur.
 function buildDemo() {
   const today = todayUtc();
   const trips: TripLike[] = [
@@ -63,7 +60,7 @@ export default async function LandingPage() {
 
       <main className="mx-auto max-w-6xl px-6 pb-20">
         <div className="grid items-center gap-12 py-10 lg:grid-cols-[1fr_420px] lg:gap-16 lg:py-16">
-          {/* Sur mobile la carte produit passe en tête ; en lg elle repart à droite. */}
+          {/* carte produit en tête sur mobile, à droite en lg */}
           <div className="order-2 lg:order-1">
             <p className="inline-flex rounded-full bg-brand-100 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-700">
               {t.badge}
@@ -98,7 +95,6 @@ export default async function LandingPage() {
             </dl>
           </div>
 
-          {/* Aperçu produit : chiffres calculés pour de vrai */}
           <div className="order-1 lg:order-2">
             <div className="overflow-hidden rounded-4xl bg-white shadow-float">
               <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-aqua px-6 pb-16 pt-7 text-center">

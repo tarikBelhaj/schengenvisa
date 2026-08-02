@@ -1,10 +1,6 @@
-/**
- * Dates pures en UTC, sans heures.
- *
- * Toute la logique 90/180 raisonne en « numéro de jour » (jours écoulés depuis
- * l'epoch UTC). Un entier ne connaît ni fuseau ni heure d'été : c'est ce qui
- * garantit qu'un séjour du 1er au 10 fait 10 jours, où que soit l'utilisateur.
- */
+// Tout le calcul raisonne en numéro de jour UTC (jours depuis l'epoch).
+// Un entier n'a ni fuseau ni heure d'été, donc du 1er au 10 fait toujours
+// 10 jours, où que soit l'utilisateur.
 
 export const MS_PER_DAY = 86_400_000;
 
@@ -24,7 +20,7 @@ export function toEpochDay(input: DateInput): number {
   }
   const d = input instanceof Date ? input : new Date(input);
   if (Number.isNaN(d.getTime())) throw new Error(`Date invalide: ${String(input)}`);
-  // On lit les composantes UTC : une colonne @db.Date revient à minuit UTC.
+  // Composantes UTC : une colonne @db.Date revient à minuit UTC.
   return Math.floor(
     Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / MS_PER_DAY,
   );
@@ -71,12 +67,8 @@ const MONTHS = {
        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 } as const;
 
-/**
- * Affichage court, sans dépendre du fuseau du navigateur.
- *
- * On n'utilise pas `toLocaleDateString` : il rendrait la date dans le fuseau
- * local, ce qui décalerait l'affichage d'un jour à l'ouest de Greenwich.
- */
+// Pas de toLocaleDateString : il rend la date dans le fuseau local, ce qui
+// décale l'affichage d'un jour à l'ouest de Greenwich.
 export function formatDate(input: DateInput, locale: 'fr' | 'en' = 'fr'): string {
   const d = toUtcDate(input);
   const month = MONTHS[locale][d.getUTCMonth()];

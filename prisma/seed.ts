@@ -1,11 +1,5 @@
-/**
- * Jeu de démonstration : un utilisateur, deux personnes, des séjours passés et
- * planifiés — dont un qui provoque volontairement un dépassement, pour voir
- * l'alerte et le drapeau rouge fonctionner.
- *
- * Les dates sont relatives à aujourd'hui : le seed reste parlant quelle que
- * soit la date à laquelle on le lance.
- */
+// Deux personnes de démo, dont une en dépassement volontaire pour voir
+// l'alerte fonctionner. Dates relatives à aujourd'hui.
 
 import { PrismaClient } from '@prisma/client';
 
@@ -14,7 +8,6 @@ const prisma = new PrismaClient();
 const MS_PER_DAY = 86_400_000;
 const TODAY = Math.floor(Date.now() / MS_PER_DAY);
 
-/** Date à minuit UTC, décalée de `offset` jours par rapport à aujourd'hui. */
 function day(offset: number): Date {
   return new Date((TODAY + offset) * MS_PER_DAY);
 }
@@ -34,7 +27,7 @@ async function main() {
     create: { email, name: 'Compte de démonstration' },
   });
 
-  // Idempotent : on repart d'une base propre pour cet utilisateur.
+  // Idempotent.
   await prisma.person.deleteMany({ where: { userId: user.id } });
 
   await prisma.person.create({
