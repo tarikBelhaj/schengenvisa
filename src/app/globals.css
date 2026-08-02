@@ -11,6 +11,15 @@ summary::-webkit-details-marker {
   display: none;
 }
 
+/* L'icône de calendrier native est trop sombre sur les champs clairs. */
+input[type='date']::-webkit-calendar-picker-indicator {
+  opacity: 0.45;
+  cursor: pointer;
+}
+input[type='date']::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

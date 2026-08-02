@@ -2,28 +2,28 @@
 
 import { signIn, signOut } from 'next-auth/react';
 
-export function SignInButton({ className }: { className?: string }) {
+export function SignInButton({ label, className }: { label: string; className?: string }) {
   return (
     <button
       onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
       className={
         className ??
-        'inline-flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50'
+        'inline-flex w-full items-center justify-center gap-3 rounded-full bg-brand-500 px-6 py-3.5 text-sm font-semibold text-white shadow-pill transition hover:bg-brand-600'
       }
     >
       <GoogleMark />
-      Continuer avec Google
+      {label}
     </button>
   );
 }
 
-export function SignOutButton() {
+export function SignOutButton({ label }: { label: string }) {
   return (
     <button
       onClick={() => signOut({ callbackUrl: '/' })}
-      className="text-sm text-slate-500 hover:text-slate-800"
+      className="rounded-full border border-brand-100 bg-white px-4 py-2 text-sm text-slate-500 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
     >
-      Se déconnecter
+      {label}
     </button>
   );
 }

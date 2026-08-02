@@ -1,40 +1,43 @@
 import { deleteTrip } from '@/app/actions';
+import { fmt, type Locale } from '@/i18n/config';
+import type { Dict } from '@/i18n/dictionaries';
 import type { TripDTO } from '@/lib/data';
-import { formatDateFr, inclusiveDays, toEpochDay, todayUtc } from '@/lib/dates';
-import { daysPresentInWindow, MAX_DAYS } from '@/lib/schengen';
+import { formatDate, inclusiveDays, toEpochDay, todayUtc } from '@/lib/dates';
+import { daysPresentInWindow, MAX_DAYS, maxStayFromEntry } from '@/lib/schengen';
+import { btnDanger } from '@/lib/ui';
 
 import TripForm from './TripForm';
 
 interface TimelineProps {
   personId: string;
   trips: TripDTO[];
+  dict: Dict;
+  locale: Locale;
 }
 
-/** Séjour passé vs planifié : deux traitements visuels nettement distincts. */
-function StatusBadge({ status }: { status: TripDTO['status'] }) {
+function StatusBadge({ status, dict }: { status: TripDTO['status']; dict: Dict }) {
   return status === 'PLANNED' ? (
-    <span className="rounded-full border border-dashed border-indigo-300 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
-      Planifié
+    <span className="rounded-full border border-dashed border-brand-300 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-600">
+      {dict.timeline.planned}
     </span>
   ) : (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-      Passé
+    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+      {dict.timeline.past}
     </span>
   );
 }
 
-export default function Timeline({ personId, trips }: TimelineProps) {
+export default function Timeline({ personId, trips, dict, locale }: TimelineProps) {
   if (trips.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-        Aucun séjour enregistré. Ajoutez-en un ci-dessous.
+      <p className="rounded-3xl border border-dashed border-brand-200 bg-white/60 p-8 text-center text-sm text-slate-500">
+        {dict.timeline.empty}
       </p>
     );
   }
 
   const today = todayUtc();
   const todayDay = toEpochDay(today);
-  // Le plus récent en haut : c'est ce qu'on consulte le plus souvent.
   const ordered = [...trips].sort((a, b) => toEpochDay(b.entryDate) - toEpochDay(a.entryDate));
 
   return (
@@ -43,47 +46,66 @@ export default function Timeline({ personId, trips }: TimelineProps) {
         const isPlanned = trip.status === 'PLANNED';
         const ongoing = trip.exitDate === null;
         const duration = inclusiveDays(trip.entryDate, trip.exitDate ?? today);
-        // Charge de la fenêtre au dernier jour du séjour : rend visible le séjour
-        // qui, à lui seul, fait basculer la personne en dépassement.
         const loadAtExit = daysPresentInWindow(trips, trip.exitDate ?? today);
         const over = loadAtExit > MAX_DAYS;
         const future = toEpochDay(trip.entryDate) > todayDay;
 
+        // Pour un séjour à venir : jusqu'à quand cette entrée autorise-t-elle
+        // de rester ? Inclure le séjour lui-même est sans effet — ses jours
+        // font déjà partie de la simulation, et l'union ne les compte qu'une fois.
+        const stay = isPlanned || future ? maxStayFromEntry(trips, trip.entryDate) : null;
+        const plannedExitDay = trip.exitDate ? toEpochDay(trip.exitDate) : null;
+        const excess =
+          stay?.maxExitDate && plannedExitDay !== null
+            ? plannedExitDay - toEpochDay(stay.maxExitDate)
+            : 0;
+
         return (
-          <li
-            key={trip.id}
-            className={`rounded-xl bg-white p-4 shadow-sm ring-1 ${
-              isPlanned ? 'ring-indigo-100' : 'ring-slate-200'
-            }`}
-          >
+          <li key={trip.id} className="rounded-3xl bg-white p-5 shadow-card">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-slate-900">
-                    {formatDateFr(trip.entryDate)}
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                      isPlanned
+                        ? 'border-2 border-brand-400 bg-white'
+                        : 'bg-gradient-to-r from-brand-600 to-aqua'
+                    }`}
+                  />
+                  <span className="font-semibold text-slate-800">
+                    {formatDate(trip.entryDate, locale)}
                     {' → '}
                     {trip.exitDate ? (
-                      formatDateFr(trip.exitDate)
+                      formatDate(trip.exitDate, locale)
                     ) : (
-                      <span className="text-slate-500">en cours</span>
+                      <span className="text-slate-400">{dict.timeline.ongoingInline}</span>
                     )}
                   </span>
-                  <StatusBadge status={trip.status} />
+                  <StatusBadge status={trip.status} dict={dict} />
                   {ongoing && (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                      En cours
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
+                      {dict.timeline.ongoing}
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-slate-500">
-                  <span className="font-medium text-slate-700 tabular-nums">{duration} j</span>
+
+                {/* 10px de pastille + 8px de gouttière : le texte s'aligne dessous. */}
+                <p className="mt-1.5 pl-[18px] text-sm text-slate-500">
+                  <span className="font-semibold text-slate-700 tabular-nums">
+                    {duration} {locale === 'en' ? 'd' : 'j'}
+                  </span>
                   {trip.country && <> · {trip.country}</>}
                   {trip.note && <> · {trip.note}</>}
                 </p>
+
                 {!future && (
-                  <p className={`mt-1 text-xs tabular-nums ${over ? 'text-red-600' : 'text-slate-400'}`}>
-                    Fenêtre à la sortie : {loadAtExit} / {MAX_DAYS} j
-                    {over && ' — dépassement'}
+                  <p
+                    className={`mt-1 pl-[18px] text-xs tabular-nums ${
+                      over ? 'text-rose-600' : 'text-slate-400'
+                    }`}
+                  >
+                    {fmt(dict.timeline.loadAtExit, { n: loadAtExit, max: MAX_DAYS })}
+                    {over && dict.timeline.overSuffix}
                   </p>
                 )}
               </div>
@@ -91,21 +113,56 @@ export default function Timeline({ personId, trips }: TimelineProps) {
               <form action={deleteTrip} className="shrink-0">
                 <input type="hidden" name="id" value={trip.id} />
                 <input type="hidden" name="personId" value={personId} />
-                <button
-                  type="submit"
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
-                >
-                  Supprimer
+                <button type="submit" className={btnDanger}>
+                  {dict.common.delete}
                 </button>
               </form>
             </div>
 
+            {/* Réponse directe : jusqu'à quand ce séjour peut-il durer ? */}
+            {stay && (
+              <div
+                className={`mt-3 rounded-2xl px-4 py-3 ${
+                  stay.allowedDays === 0 || excess > 0 ? 'bg-rose-50' : 'bg-brand-50'
+                }`}
+              >
+                {stay.allowedDays === 0 ? (
+                  <p className="text-sm font-medium text-rose-700">
+                    {dict.timeline.cannotEnter}
+                  </p>
+                ) : (
+                  <>
+                    <p
+                      className={`text-sm font-semibold ${
+                        excess > 0 ? 'text-rose-700' : 'text-brand-700'
+                      }`}
+                    >
+                      {fmt(dict.timeline.canStayUntil, {
+                        date: formatDate(stay.maxExitDate!, locale),
+                      })}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {fmt(dict.timeline.canStayDays, { n: stay.allowedDays })}
+                    </p>
+                    {excess > 0 && (
+                      <p className="mt-1.5 text-xs font-medium text-rose-600">
+                        {fmt(dict.timeline.exceeds, {
+                          n: excess,
+                          date: formatDate(trip.exitDate!, locale),
+                        })}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
             <details className="mt-3">
-              <summary className="inline-block cursor-pointer list-none rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">
-                Modifier
+              <summary className="inline-flex cursor-pointer list-none items-center rounded-full border border-brand-100 px-4 py-1.5 text-sm text-slate-500 transition hover:border-brand-300 hover:text-brand-600">
+                {dict.common.edit}
               </summary>
-              <div className="mt-3 rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200">
-                <TripForm personId={personId} trip={trip} />
+              <div className="mt-4 rounded-2xl bg-brand-50/60 p-4">
+                <TripForm personId={personId} trip={trip} dict={dict} />
               </div>
             </details>
           </li>

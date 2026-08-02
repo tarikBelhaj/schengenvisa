@@ -2,13 +2,18 @@
 
 import { useMemo, useState } from 'react';
 
+import { fmt, type Locale } from '@/i18n/config';
+import type { Dict } from '@/i18n/dictionaries';
 import type { TripDTO } from '@/lib/data';
-import { formatDateFr, toIsoDate, todayUtc } from '@/lib/dates';
+import { formatDate, toIsoDate, todayUtc } from '@/lib/dates';
 import { MAX_DAYS, maxStayFromEntry } from '@/lib/schengen';
+import { input, label } from '@/lib/ui';
 
 interface SimulatorProps {
   personName: string;
   trips: TripDTO[];
+  dict: Dict;
+  locale: Locale;
 }
 
 /**
@@ -17,7 +22,7 @@ interface SimulatorProps {
  * Le calcul est pur et sans dépendance : il tourne dans le navigateur, la
  * réponse est instantanée à chaque changement de date.
  */
-export default function Simulator({ personName, trips }: SimulatorProps) {
+export default function Simulator({ personName, trips, dict, locale }: SimulatorProps) {
   const [entryDate, setEntryDate] = useState(() => toIsoDate(todayUtc()));
 
   const result = useMemo(() => {
@@ -32,63 +37,74 @@ export default function Simulator({ personName, trips }: SimulatorProps) {
   const impossible = result !== null && result.allowedDays === 0;
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 className="text-base font-semibold text-slate-900">Simulateur de séjour</h2>
-      <p className="mt-1 text-sm text-slate-500">
-        Si {personName} entre à cette date, jusqu&apos;à quand peut-elle rester ?
-      </p>
+    <section className="overflow-hidden rounded-3xl bg-white shadow-card">
+      {/* Panneau de résultat : le chiffre d'abord, la saisie ensuite. */}
+      <div
+        className={`px-6 py-7 text-center ${
+          impossible
+            ? 'bg-gradient-to-br from-rose-500 to-rose-400'
+            : 'bg-gradient-to-br from-brand-600 via-brand-500 to-aqua'
+        }`}
+      >
+        {impossible ? (
+          <>
+            <p className="text-sm text-white/80">{dict.simulator.impossible}</p>
+            <p className="mt-2 text-5xl font-semibold leading-none text-white">0</p>
+            <p className="mt-2 text-sm text-white/80">
+              {fmt(dict.simulator.impossibleBody, {
+                n: result.daysUsedAtEntry,
+                max: MAX_DAYS,
+              })}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-white/80">{dict.simulator.possible}</p>
+            <p className="mt-2 text-6xl font-semibold leading-none tabular-nums text-white">
+              {result?.allowedDays ?? '—'}
+            </p>
+            <p className="mt-2 text-sm text-white/80">{dict.common.days}</p>
 
-      <label className="mt-4 block text-xs font-medium uppercase tracking-wide text-slate-500">
-        Date d&apos;entrée
-      </label>
-      <input
-        type="date"
-        value={entryDate}
-        onChange={(e) => setEntryDate(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm
-                   focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-56"
-      />
+            {result?.maxExitDate && (
+              <div className="mt-5 border-t border-dashed border-white/30 pt-4">
+                <p className="text-xs uppercase tracking-wide text-white/70">
+                  {dict.simulator.exitBy}
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {formatDate(result.maxExitDate, locale)}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
-      {result && (
-        <div
-          className={`mt-4 rounded-lg p-4 ring-1 ${
-            impossible ? 'bg-red-50 ring-red-200' : 'bg-indigo-50 ring-indigo-200'
-          }`}
-        >
-          {impossible ? (
-            <>
-              <p className="font-semibold text-red-800">Entrée impossible à cette date</p>
-              <p className="mt-1 text-sm text-red-700">
-                {result.daysUsedAtEntry} jours sont déjà consommés dans la fenêtre de 180 jours ·
-                le quota de {MAX_DAYS} jours est atteint.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-indigo-900">
-                Sortie au plus tard le{' '}
-                <span className="font-semibold">{formatDateFr(result.maxExitDate!)}</span>
-              </p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums text-indigo-900">
-                {result.allowedDays} <span className="text-base font-normal">jours autorisés</span>
-              </p>
-              <p className="mt-2 text-xs text-indigo-700">
-                {result.daysUsedAtEntry} jour{result.daysUsedAtEntry > 1 ? 's' : ''} déjà
-                consommé{result.daysUsedAtEntry > 1 ? 's' : ''} dans la fenêtre au jour de
-                l&apos;entrée
-                {result.allowedDays === MAX_DAYS && result.daysUsedAtEntry > 0 && (
-                  <> — l&apos;historique sort de la fenêtre pendant le séjour, d&apos;où les {MAX_DAYS} jours pleins</>
-                )}
-                .
-              </p>
-            </>
-          )}
-        </div>
-      )}
+      <div className="px-6 py-6">
+        <h2 className="text-base font-semibold text-slate-800">{dict.simulator.title}</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          {fmt(dict.simulator.question, { name: personName })}
+        </p>
 
-      <p className="mt-3 text-xs text-slate-400">
-        La simulation tient compte des séjours passés <em>et</em> planifiés déjà enregistrés.
-      </p>
+        <label className={`${label} mt-5 block`} htmlFor="sim-entry">
+          {dict.simulator.entryDate}
+        </label>
+        <input
+          id="sim-entry"
+          type="date"
+          value={entryDate}
+          onChange={(e) => setEntryDate(e.target.value)}
+          className={`${input} mt-1.5`}
+        />
+
+        {result && !impossible && result.daysUsedAtEntry > 0 && (
+          <p className="mt-4 text-xs leading-relaxed text-slate-500">
+            {fmt(dict.simulator.usedAtEntry, { n: result.daysUsedAtEntry })}
+            {result.allowedDays === MAX_DAYS && fmt(dict.simulator.releaseNote, { max: MAX_DAYS })}
+          </p>
+        )}
+
+        <p className="mt-4 text-xs text-slate-400">{dict.simulator.footnote}</p>
+      </div>
     </section>
   );
 }

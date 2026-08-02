@@ -1,0 +1,321 @@
+import type { Locale } from './config';
+
+/**
+ * Toutes les chaînes visibles par l'utilisateur.
+ *
+ * Les valeurs sont des chaînes plates : `fmt()` y injecte les variables. Cela
+ * les garde sérialisables, condition pour les passer à un composant client.
+ * Le français fait foi — `Dict` en dérive, donc une clé oubliée en anglais
+ * casse la compilation.
+ */
+const fr = {
+  common: {
+    days: 'jours',
+    day: 'jour',
+    optional: '(optionnel)',
+    saving: 'Enregistrement…',
+    update: 'Mettre à jour',
+    delete: 'Supprimer',
+    edit: 'Modifier',
+    on: 'Au {date}',
+    language: 'Langue',
+  },
+  nav: {
+    signOut: 'Se déconnecter',
+    signIn: 'Se connecter',
+    google: 'Continuer avec Google',
+  },
+  landing: {
+    badge: 'Règle 90/180',
+    titleLine1: '90 jours sur 180,',
+    titleLine2: 'calculés correctement.',
+    subtitle:
+      'Le suivi des séjours Schengen pour vous et vos proches. Fenêtre glissante réelle, séjours planifiés inclus, et la réponse à la seule question qui compte.',
+    cta: 'Commencer',
+    ctaHint: 'Connexion Google',
+    point1Title: 'Une fenêtre qui glisse',
+    point1Body:
+      'Pas un quota annuel. Sur toute période de 180 jours, 90 jours maximum — et chaque jour qui passe fait sortir un jour ancien, donc libère du crédit.',
+    point2Title: 'Les séjours prévus comptent',
+    point2Body:
+      'Un voyage planifié pèse dans le calcul au même titre qu’un séjour passé. Celui qui provoquerait un dépassement est signalé avant le départ.',
+    point3Title: 'Jusqu’à quand puis-je rester ?',
+    point3Body:
+      'Le simulateur avance jour par jour depuis la date d’entrée et recalcule la fenêtre à chaque étape. Une date, pas une estimation.',
+    demoEntry: 'Entrée le {date}',
+    demoUntil: 'jusqu’au {date}',
+    demoNote: 'Données d’exemple — chiffres produits par le moteur de l’application.',
+    disclaimer:
+      'Outil de suivi personnel. Le calcul suit la règle générale 90/180 et ne tient pas compte des visas long séjour, titres de séjour ou accords bilatéraux. Ne remplace pas l’avis d’une autorité consulaire.',
+  },
+  login: {
+    title: 'Accéder à votre suivi',
+    subtitle: 'Vos personnes, leurs séjours et le simulateur.',
+    reassurance1: 'Chacun ne voit que ses propres personnes et séjours.',
+    reassurance2: 'Aucun mot de passe : la connexion passe par Google.',
+    reassurance3: 'Instance privée — seules les adresses autorisées entrent.',
+    back: '← Retour à l’accueil',
+    errorAccessDenied: 'Ce compte Google n’est pas autorisé sur cette instance.',
+    errorNotLinked: 'Cette adresse est déjà associée à une autre méthode de connexion.',
+    errorConfiguration:
+      'Configuration OAuth incomplète — vérifiez les variables d’environnement.',
+    errorGeneric: 'La connexion a échoué. Réessayez.',
+  },
+  dashboard: {
+    title: 'Personnes suivies',
+    flagged: '{n} personne en dépassement, séjours planifiés compris.',
+    flaggedPlural: '{n} personnes en dépassement, séjours planifiés compris.',
+    empty: 'Personne suivie pour l’instant. Ajoutez la première ci-dessous.',
+    noNationality: 'Nationalité non renseignée',
+    tripCount: '{n} séjour',
+    tripCountPlural: '{n} séjours',
+    nextTrip: 'Prochain séjour :',
+    noPlanned: 'Aucun séjour planifié',
+    overageShort: 'Dépassement le {date} — {n} j dans la fenêtre.',
+    overageBadge: 'Dépassement',
+    addPerson: 'Ajouter une personne',
+  },
+  person: {
+    backToList: '← Toutes les personnes',
+    overageTitle: 'Dépassement détecté',
+    overageBody:
+      'Le {date}, la fenêtre de 180 jours atteint {present} jours de présence — {excess} de plus que les {max} autorisés.',
+    overagePlanned: ' Les séjours planifiés sont inclus dans ce calcul.',
+    windowTitle: 'La fenêtre de 180 jours',
+    windowBody:
+      'Ce qui approche du bord gauche va bientôt sortir de la fenêtre et libérer du crédit.',
+    tripsTitle: 'Séjours',
+    addTrip: 'Ajouter un séjour',
+    profile: 'Fiche',
+    deletePerson: 'Supprimer {name} et son séjour',
+    deletePersonPlural: 'Supprimer {name} et ses {n} séjours',
+  },
+  gauge: {
+    remaining: 'Il reste',
+    over: 'Dépassement de',
+    used: 'Consommés',
+    window: 'Fenêtre',
+    remainingShort: '{n} j',
+    overShort: '{n} j de trop',
+  },
+  window: {
+    today: 'aujourd’hui',
+    legendPast: 'séjour passé',
+    legendPlanned: 'planifié',
+    tooltip: '{n} jours',
+    tooltipPlanned: '{n} jours (planifié)',
+  },
+  timeline: {
+    empty: 'Aucun séjour enregistré. Ajoutez-en un ci-dessous.',
+    past: 'Passé',
+    planned: 'Planifié',
+    ongoing: 'En cours',
+    ongoingInline: 'en cours',
+    loadAtExit: 'Fenêtre à la sortie : {n} / {max} j',
+    overSuffix: ' — dépassement',
+    canStayUntil: 'Vous pouvez rester jusqu’au {date}',
+    canStayDays: '{n} jours maximum depuis cette entrée',
+    exceeds: 'Ce séjour dépasse de {n} jour(s) — sortie prévue le {date}',
+    cannotEnter: 'Entrée impossible à cette date : le quota est déjà atteint',
+  },
+  simulator: {
+    title: 'Simulateur',
+    question: 'Si {name} entre à cette date, jusqu’à quand peut-elle rester ?',
+    possible: 'Séjour possible',
+    impossible: 'Entrée impossible à cette date',
+    impossibleBody: '{n} jours déjà consommés sur {max}',
+    exitBy: 'Sortie au plus tard le',
+    entryDate: 'Date d’entrée',
+    usedAtEntry:
+      '{n} jour(s) déjà consommé(s) dans la fenêtre au jour de l’entrée',
+    releaseNote:
+      ' — l’historique sort de la fenêtre pendant le séjour, d’où les {max} jours pleins',
+    footnote: 'La simulation tient compte des séjours passés et planifiés.',
+  },
+  tripForm: {
+    entry: 'Entrée',
+    exit: 'Sortie',
+    exitHint: 'Vide = séjour en cours',
+    status: 'Statut',
+    statusPast: 'Passé',
+    statusPlanned: 'Planifié',
+    country: 'Pays',
+    countryPlaceholder: 'France, Espagne…',
+    note: 'Note',
+    submit: 'Ajouter le séjour',
+  },
+  personForm: {
+    name: 'Nom',
+    namePlaceholder: 'Prénom Nom',
+    nationality: 'Nationalité',
+    nationalityPlaceholder: 'Tunisienne, Marocaine…',
+    notes: 'Notes',
+    submit: 'Ajouter la personne',
+  },
+  errors: {
+    nameRequired: 'Le nom est obligatoire',
+    dateFormat: 'Date attendue au format AAAA-MM-JJ',
+    exitBeforeEntry: 'La date de sortie doit suivre la date d’entrée',
+    personNotFound: 'Personne introuvable',
+    tripNotFound: 'Séjour introuvable',
+    invalid: 'Données invalides',
+  },
+} as const;
+
+export type Dict = {
+  [K in keyof typeof fr]: { [P in keyof (typeof fr)[K]]: string };
+};
+
+const en: Dict = {
+  common: {
+    days: 'days',
+    day: 'day',
+    optional: '(optional)',
+    saving: 'Saving…',
+    update: 'Update',
+    delete: 'Delete',
+    edit: 'Edit',
+    on: 'As of {date}',
+    language: 'Language',
+  },
+  nav: {
+    signOut: 'Sign out',
+    signIn: 'Sign in',
+    google: 'Continue with Google',
+  },
+  landing: {
+    badge: '90/180 rule',
+    titleLine1: '90 days in 180,',
+    titleLine2: 'calculated properly.',
+    subtitle:
+      'Schengen stay tracking for you and the people close to you. A real rolling window, planned trips included, and an answer to the only question that matters.',
+    cta: 'Get started',
+    ctaHint: 'Google sign-in',
+    point1Title: 'A window that slides',
+    point1Body:
+      'Not an annual quota. Across any 180-day period, 90 days at most — and every day that passes drops an old one out, freeing up credit.',
+    point2Title: 'Planned trips count',
+    point2Body:
+      'A planned trip weighs on the calculation exactly like a past one. Any trip that would push you over is flagged before you leave.',
+    point3Title: 'How long can I stay?',
+    point3Body:
+      'The simulator steps forward day by day from your entry date, recalculating the window at each step. A date, not an estimate.',
+    demoEntry: 'Entry on {date}',
+    demoUntil: 'until {date}',
+    demoNote: 'Sample data — figures produced by the application’s own engine.',
+    disclaimer:
+      'Personal tracking tool. The calculation follows the general 90/180 rule and does not account for long-stay visas, residence permits or bilateral agreements. It does not replace advice from a consular authority.',
+  },
+  login: {
+    title: 'Open your tracker',
+    subtitle: 'Your people, their trips and the simulator.',
+    reassurance1: 'Everyone sees only their own people and trips.',
+    reassurance2: 'No password to remember — sign-in goes through Google.',
+    reassurance3: 'Private instance — only allowed addresses get in.',
+    back: '← Back to home',
+    errorAccessDenied: 'This Google account is not allowed on this instance.',
+    errorNotLinked: 'This address is already tied to another sign-in method.',
+    errorConfiguration: 'Incomplete OAuth configuration — check the environment variables.',
+    errorGeneric: 'Sign-in failed. Please try again.',
+  },
+  dashboard: {
+    title: 'People tracked',
+    flagged: '{n} person over the limit, planned trips included.',
+    flaggedPlural: '{n} people over the limit, planned trips included.',
+    empty: 'Nobody tracked yet. Add the first person below.',
+    noNationality: 'Nationality not set',
+    tripCount: '{n} trip',
+    tripCountPlural: '{n} trips',
+    nextTrip: 'Next trip:',
+    noPlanned: 'No planned trip',
+    overageShort: 'Over the limit on {date} — {n} days in the window.',
+    overageBadge: 'Over limit',
+    addPerson: 'Add a person',
+  },
+  person: {
+    backToList: '← All people',
+    overageTitle: 'Over the limit',
+    overageBody:
+      'On {date}, the 180-day window reaches {present} days of presence — {excess} more than the {max} allowed.',
+    overagePlanned: ' Planned trips are included in this calculation.',
+    windowTitle: 'The 180-day window',
+    windowBody:
+      'Anything approaching the left edge is about to leave the window and free up credit.',
+    tripsTitle: 'Trips',
+    addTrip: 'Add a trip',
+    profile: 'Profile',
+    deletePerson: 'Delete {name} and their trip',
+    deletePersonPlural: 'Delete {name} and their {n} trips',
+  },
+  gauge: {
+    remaining: 'Remaining',
+    over: 'Over by',
+    used: 'Used',
+    window: 'Window',
+    remainingShort: '{n} d',
+    overShort: '{n} d over',
+  },
+  window: {
+    today: 'today',
+    legendPast: 'past trip',
+    legendPlanned: 'planned',
+    tooltip: '{n} days',
+    tooltipPlanned: '{n} days (planned)',
+  },
+  timeline: {
+    empty: 'No trip recorded. Add one below.',
+    past: 'Past',
+    planned: 'Planned',
+    ongoing: 'Ongoing',
+    ongoingInline: 'ongoing',
+    loadAtExit: 'Window at exit: {n} / {max} d',
+    overSuffix: ' — over the limit',
+    canStayUntil: 'You can stay until {date}',
+    canStayDays: '{n} days maximum from this entry',
+    exceeds: 'This trip goes over by {n} day(s) — exit planned on {date}',
+    cannotEnter: 'Entry not possible on this date: the quota is already used up',
+  },
+  simulator: {
+    title: 'Simulator',
+    question: 'If {name} enters on this date, how long can they stay?',
+    possible: 'Stay allowed',
+    impossible: 'Entry not possible on this date',
+    impossibleBody: '{n} days already used out of {max}',
+    exitBy: 'Latest exit date',
+    entryDate: 'Entry date',
+    usedAtEntry: '{n} day(s) already used in the window on the day of entry',
+    releaseNote:
+      ' — the history leaves the window during the stay, hence the full {max} days',
+    footnote: 'The simulation accounts for both past and planned trips.',
+  },
+  tripForm: {
+    entry: 'Entry',
+    exit: 'Exit',
+    exitHint: 'Empty = ongoing stay',
+    status: 'Status',
+    statusPast: 'Past',
+    statusPlanned: 'Planned',
+    country: 'Country',
+    countryPlaceholder: 'France, Spain…',
+    note: 'Note',
+    submit: 'Add trip',
+  },
+  personForm: {
+    name: 'Name',
+    namePlaceholder: 'First and last name',
+    nationality: 'Nationality',
+    nationalityPlaceholder: 'Tunisian, Moroccan…',
+    notes: 'Notes',
+    submit: 'Add person',
+  },
+  errors: {
+    nameRequired: 'Name is required',
+    dateFormat: 'Date expected in YYYY-MM-DD format',
+    exitBeforeEntry: 'The exit date must follow the entry date',
+    personNotFound: 'Person not found',
+    tripNotFound: 'Trip not found',
+    invalid: 'Invalid data',
+  },
+};
+
+export const dictionaries: Record<Locale, Dict> = { fr, en };

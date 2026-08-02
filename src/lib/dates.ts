@@ -64,13 +64,23 @@ export function todayUtc(): Date {
   return toUtcDate(new Date());
 }
 
-const FR_MONTHS = [
-  'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-  'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
-];
+const MONTHS = {
+  fr: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+       'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+} as const;
 
-/** Affichage court FR, sans dépendre du fuseau du navigateur. */
-export function formatDateFr(input: DateInput): string {
+/**
+ * Affichage court, sans dépendre du fuseau du navigateur.
+ *
+ * On n'utilise pas `toLocaleDateString` : il rendrait la date dans le fuseau
+ * local, ce qui décalerait l'affichage d'un jour à l'ouest de Greenwich.
+ */
+export function formatDate(input: DateInput, locale: 'fr' | 'en' = 'fr'): string {
   const d = toUtcDate(input);
-  return `${d.getUTCDate()} ${FR_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  const month = MONTHS[locale][d.getUTCMonth()];
+  return locale === 'en'
+    ? `${month} ${d.getUTCDate()}, ${d.getUTCFullYear()}`
+    : `${d.getUTCDate()} ${month} ${d.getUTCFullYear()}`;
 }

@@ -3,29 +3,22 @@
 import { useFormState, useFormStatus } from 'react-dom';
 
 import { savePerson, type ActionState } from '@/app/actions';
+import type { Dict } from '@/i18n/dictionaries';
 import type { PersonDTO } from '@/lib/data';
+import { btnPrimary, input, label } from '@/lib/ui';
 
-const field =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm ' +
-  'focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
-const label = 'block text-xs font-medium uppercase tracking-wide text-slate-500';
-
-function SubmitButton({ children }: { children: React.ReactNode }) {
+function SubmitButton({ children, saving }: { children: React.ReactNode; saving: string }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm
-                 hover:bg-indigo-500 disabled:opacity-60"
-    >
-      {pending ? 'Enregistrement…' : children}
+    <button type="submit" disabled={pending} className={btnPrimary}>
+      {pending ? saving : children}
     </button>
   );
 }
 
-export default function PersonForm({ person }: { person?: PersonDTO }) {
+export default function PersonForm({ person, dict }: { person?: PersonDTO; dict: Dict }) {
   const [state, formAction] = useFormState<ActionState, FormData>(savePerson, {});
+  const t = dict.personForm;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -34,38 +27,38 @@ export default function PersonForm({ person }: { person?: PersonDTO }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={label} htmlFor="person-name">
-            Nom
+            {t.name}
           </label>
           <input
             id="person-name"
-            className={`${field} mt-1`}
+            className={`${input} mt-1.5`}
             name="name"
             required
             defaultValue={person?.name}
-            placeholder="Prénom Nom"
+            placeholder={t.namePlaceholder}
           />
         </div>
         <div>
           <label className={label} htmlFor="person-nationality">
-            Nationalité (optionnel)
+            {t.nationality} <span className="text-slate-400">{dict.common.optional}</span>
           </label>
           <input
             id="person-nationality"
-            className={`${field} mt-1`}
+            className={`${input} mt-1.5`}
             name="nationality"
             defaultValue={person?.nationality ?? ''}
-            placeholder="Tunisienne, Marocaine…"
+            placeholder={t.nationalityPlaceholder}
           />
         </div>
       </div>
 
       <div>
         <label className={label} htmlFor="person-notes">
-          Notes (optionnel)
+          {t.notes} <span className="text-slate-400">{dict.common.optional}</span>
         </label>
         <textarea
           id="person-notes"
-          className={`${field} mt-1`}
+          className={`${input} mt-1.5`}
           name="notes"
           rows={2}
           defaultValue={person?.notes ?? ''}
@@ -73,10 +66,12 @@ export default function PersonForm({ person }: { person?: PersonDTO }) {
       </div>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">{state.error}</p>
       )}
 
-      <SubmitButton>{person ? 'Mettre à jour' : 'Ajouter la personne'}</SubmitButton>
+      <SubmitButton saving={dict.common.saving}>
+        {person ? dict.common.update : t.submit}
+      </SubmitButton>
     </form>
   );
 }
