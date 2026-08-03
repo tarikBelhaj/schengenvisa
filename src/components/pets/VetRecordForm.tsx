@@ -6,27 +6,9 @@ import { saveRecord, type ActionState } from '@/app/pets/actions';
 import type { Dict } from '@/i18n/dictionaries';
 import type { VetRecordDTO } from '@/lib/petsData';
 import { btnPrimary, input, label } from '@/lib/ui';
-import type { VetRecordType } from '@/travel-rules/types';
+import { typeLabel, VET_RECORD_TYPES } from '@/lib/petsLabels';
 
 import AttachmentInput from './AttachmentInput';
-
-const TYPES: VetRecordType[] = [
-  'RABIES_VACCINE',
-  'RABIES_TITER',
-  'CHPPI_VACCINE',
-  'LEPTOSPIROSIS_VACCINE',
-  'BORDETELLA_VACCINE',
-  'DEWORMING',
-  'ANTIPARASITIC',
-  'HEALTH_CERTIFICATE',
-  'IMPORT_PERMIT',
-  'OTHER',
-];
-
-/** Libellé traduit d'un type de document. */
-export function typeLabel(dict: Dict, type: VetRecordType): string {
-  return dict.pets[`type${type}` as keyof Dict['pets']] ?? type;
-}
 
 function SubmitButton({ children, saving }: { children: React.ReactNode; saving: string }) {
   const { pending } = useFormStatus();
@@ -63,7 +45,7 @@ export default function VetRecordForm({ dogId, record, dict }: VetRecordFormProp
           name="type"
           defaultValue={record?.type ?? 'RABIES_VACCINE'}
         >
-          {TYPES.map((type) => (
+          {VET_RECORD_TYPES.map((type) => (
             <option key={type} value={type}>
               {typeLabel(dict, type)}
             </option>

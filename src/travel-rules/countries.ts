@@ -1,21 +1,265 @@
 import type { Locale } from '@/i18n/config';
 
-// Liste ISO 3166-1 alpha-2 complète, pour les champs où l'on désigne un pays
-// sans avoir besoin de ses règles d'importation (résidence, par exemple).
-// Les noms viennent d'Intl : rien à traduire à la main, et ça suit la langue.
-const ISO_CODES =
-  'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ ' +
-  'CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO ' +
-  'FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE ' +
-  'JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO ' +
-  'MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW ' +
-  'PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM ' +
-  'TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW';
+// Table statique plutôt qu'Intl.DisplayNames : les données ICU de Node et
+// celles du navigateur ne concordent pas toujours, et le rendu serveur
+// divergeait du rendu client — erreurs d'hydratation React 418/423/425.
+// [nom français, nom anglais]
+const NAMES: Record<string, [string, string]> = {
+  AD: ['Andorre', 'Andorra'],
+  AE: ['Émirats arabes unis', 'United Arab Emirates'],
+  AF: ['Afghanistan', 'Afghanistan'],
+  AG: ['Antigua-et-Barbuda', 'Antigua & Barbuda'],
+  AI: ['Anguilla', 'Anguilla'],
+  AL: ['Albanie', 'Albania'],
+  AM: ['Arménie', 'Armenia'],
+  AO: ['Angola', 'Angola'],
+  AQ: ['Antarctique', 'Antarctica'],
+  AR: ['Argentine', 'Argentina'],
+  AS: ['Samoa américaines', 'American Samoa'],
+  AT: ['Autriche', 'Austria'],
+  AU: ['Australie', 'Australia'],
+  AW: ['Aruba', 'Aruba'],
+  AX: ['Îles Åland', 'Åland Islands'],
+  AZ: ['Azerbaïdjan', 'Azerbaijan'],
+  BA: ['Bosnie-Herzégovine', 'Bosnia & Herzegovina'],
+  BB: ['Barbade', 'Barbados'],
+  BD: ['Bangladesh', 'Bangladesh'],
+  BE: ['Belgique', 'Belgium'],
+  BF: ['Burkina Faso', 'Burkina Faso'],
+  BG: ['Bulgarie', 'Bulgaria'],
+  BH: ['Bahreïn', 'Bahrain'],
+  BI: ['Burundi', 'Burundi'],
+  BJ: ['Bénin', 'Benin'],
+  BL: ['Saint-Barthélemy', 'St. Barthélemy'],
+  BM: ['Bermudes', 'Bermuda'],
+  BN: ['Brunei', 'Brunei'],
+  BO: ['Bolivie', 'Bolivia'],
+  BQ: ['Pays-Bas caribéens', 'Caribbean Netherlands'],
+  BR: ['Brésil', 'Brazil'],
+  BS: ['Bahamas', 'Bahamas'],
+  BT: ['Bhoutan', 'Bhutan'],
+  BV: ['Île Bouvet', 'Bouvet Island'],
+  BW: ['Botswana', 'Botswana'],
+  BY: ['Biélorussie', 'Belarus'],
+  BZ: ['Belize', 'Belize'],
+  CA: ['Canada', 'Canada'],
+  CC: ['Îles Cocos', 'Cocos (Keeling) Islands'],
+  CD: ['Congo-Kinshasa', 'Congo - Kinshasa'],
+  CF: ['République centrafricaine', 'Central African Republic'],
+  CG: ['Congo-Brazzaville', 'Congo - Brazzaville'],
+  CH: ['Suisse', 'Switzerland'],
+  CI: ['Côte d’Ivoire', 'Côte d’Ivoire'],
+  CK: ['Îles Cook', 'Cook Islands'],
+  CL: ['Chili', 'Chile'],
+  CM: ['Cameroun', 'Cameroon'],
+  CN: ['Chine', 'China'],
+  CO: ['Colombie', 'Colombia'],
+  CR: ['Costa Rica', 'Costa Rica'],
+  CU: ['Cuba', 'Cuba'],
+  CV: ['Cap-Vert', 'Cape Verde'],
+  CW: ['Curaçao', 'Curaçao'],
+  CX: ['Île Christmas', 'Christmas Island'],
+  CY: ['Chypre', 'Cyprus'],
+  CZ: ['Tchéquie', 'Czechia'],
+  DE: ['Allemagne', 'Germany'],
+  DJ: ['Djibouti', 'Djibouti'],
+  DK: ['Danemark', 'Denmark'],
+  DM: ['Dominique', 'Dominica'],
+  DO: ['République dominicaine', 'Dominican Republic'],
+  DZ: ['Algérie', 'Algeria'],
+  EC: ['Équateur', 'Ecuador'],
+  EE: ['Estonie', 'Estonia'],
+  EG: ['Égypte', 'Egypt'],
+  EH: ['Sahara occidental', 'Western Sahara'],
+  ER: ['Érythrée', 'Eritrea'],
+  ES: ['Espagne', 'Spain'],
+  ET: ['Éthiopie', 'Ethiopia'],
+  FI: ['Finlande', 'Finland'],
+  FJ: ['Fidji', 'Fiji'],
+  FK: ['Îles Malouines', 'Falkland Islands'],
+  FM: ['Micronésie', 'Micronesia'],
+  FO: ['Îles Féroé', 'Faroe Islands'],
+  FR: ['France', 'France'],
+  GA: ['Gabon', 'Gabon'],
+  GB: ['Royaume-Uni', 'United Kingdom'],
+  GD: ['Grenade', 'Grenada'],
+  GE: ['Géorgie', 'Georgia'],
+  GF: ['Guyane française', 'French Guiana'],
+  GG: ['Guernesey', 'Guernsey'],
+  GH: ['Ghana', 'Ghana'],
+  GI: ['Gibraltar', 'Gibraltar'],
+  GL: ['Groenland', 'Greenland'],
+  GM: ['Gambie', 'Gambia'],
+  GN: ['Guinée', 'Guinea'],
+  GP: ['Guadeloupe', 'Guadeloupe'],
+  GQ: ['Guinée équatoriale', 'Equatorial Guinea'],
+  GR: ['Grèce', 'Greece'],
+  GS: ['Géorgie du Sud-et-les Îles Sandwich du Sud', 'South Georgia & South Sandwich Islands'],
+  GT: ['Guatemala', 'Guatemala'],
+  GU: ['Guam', 'Guam'],
+  GW: ['Guinée-Bissau', 'Guinea-Bissau'],
+  GY: ['Guyana', 'Guyana'],
+  HK: ['R.A.S. chinoise de Hong Kong', 'Hong Kong SAR China'],
+  HM: ['Îles Heard-et-MacDonald', 'Heard & McDonald Islands'],
+  HN: ['Honduras', 'Honduras'],
+  HR: ['Croatie', 'Croatia'],
+  HT: ['Haïti', 'Haiti'],
+  HU: ['Hongrie', 'Hungary'],
+  ID: ['Indonésie', 'Indonesia'],
+  IE: ['Irlande', 'Ireland'],
+  IL: ['Israël', 'Israel'],
+  IM: ['Île de Man', 'Isle of Man'],
+  IN: ['Inde', 'India'],
+  IO: ['Territoire britannique de l’océan Indien', 'British Indian Ocean Territory'],
+  IQ: ['Irak', 'Iraq'],
+  IR: ['Iran', 'Iran'],
+  IS: ['Islande', 'Iceland'],
+  IT: ['Italie', 'Italy'],
+  JE: ['Jersey', 'Jersey'],
+  JM: ['Jamaïque', 'Jamaica'],
+  JO: ['Jordanie', 'Jordan'],
+  JP: ['Japon', 'Japan'],
+  KE: ['Kenya', 'Kenya'],
+  KG: ['Kirghizstan', 'Kyrgyzstan'],
+  KH: ['Cambodge', 'Cambodia'],
+  KI: ['Kiribati', 'Kiribati'],
+  KM: ['Comores', 'Comoros'],
+  KN: ['Saint-Christophe-et-Niévès', 'St. Kitts & Nevis'],
+  KP: ['Corée du Nord', 'North Korea'],
+  KR: ['Corée du Sud', 'South Korea'],
+  KW: ['Koweït', 'Kuwait'],
+  KY: ['Îles Caïmans', 'Cayman Islands'],
+  KZ: ['Kazakhstan', 'Kazakhstan'],
+  LA: ['Laos', 'Laos'],
+  LB: ['Liban', 'Lebanon'],
+  LC: ['Sainte-Lucie', 'St. Lucia'],
+  LI: ['Liechtenstein', 'Liechtenstein'],
+  LK: ['Sri Lanka', 'Sri Lanka'],
+  LR: ['Liberia', 'Liberia'],
+  LS: ['Lesotho', 'Lesotho'],
+  LT: ['Lituanie', 'Lithuania'],
+  LU: ['Luxembourg', 'Luxembourg'],
+  LV: ['Lettonie', 'Latvia'],
+  LY: ['Libye', 'Libya'],
+  MA: ['Maroc', 'Morocco'],
+  MC: ['Monaco', 'Monaco'],
+  MD: ['Moldavie', 'Moldova'],
+  ME: ['Monténégro', 'Montenegro'],
+  MF: ['Saint-Martin', 'St. Martin'],
+  MG: ['Madagascar', 'Madagascar'],
+  MH: ['Îles Marshall', 'Marshall Islands'],
+  MK: ['Macédoine du Nord', 'North Macedonia'],
+  ML: ['Mali', 'Mali'],
+  MM: ['Myanmar (Birmanie)', 'Myanmar (Burma)'],
+  MN: ['Mongolie', 'Mongolia'],
+  MO: ['R.A.S. chinoise de Macao', 'Macao SAR China'],
+  MP: ['Îles Mariannes du Nord', 'Northern Mariana Islands'],
+  MQ: ['Martinique', 'Martinique'],
+  MR: ['Mauritanie', 'Mauritania'],
+  MS: ['Montserrat', 'Montserrat'],
+  MT: ['Malte', 'Malta'],
+  MU: ['Maurice', 'Mauritius'],
+  MV: ['Maldives', 'Maldives'],
+  MW: ['Malawi', 'Malawi'],
+  MX: ['Mexique', 'Mexico'],
+  MY: ['Malaisie', 'Malaysia'],
+  MZ: ['Mozambique', 'Mozambique'],
+  NA: ['Namibie', 'Namibia'],
+  NC: ['Nouvelle-Calédonie', 'New Caledonia'],
+  NE: ['Niger', 'Niger'],
+  NF: ['Île Norfolk', 'Norfolk Island'],
+  NG: ['Nigeria', 'Nigeria'],
+  NI: ['Nicaragua', 'Nicaragua'],
+  NL: ['Pays-Bas', 'Netherlands'],
+  NO: ['Norvège', 'Norway'],
+  NP: ['Népal', 'Nepal'],
+  NR: ['Nauru', 'Nauru'],
+  NU: ['Niue', 'Niue'],
+  NZ: ['Nouvelle-Zélande', 'New Zealand'],
+  OM: ['Oman', 'Oman'],
+  PA: ['Panama', 'Panama'],
+  PE: ['Pérou', 'Peru'],
+  PF: ['Polynésie française', 'French Polynesia'],
+  PG: ['Papouasie-Nouvelle-Guinée', 'Papua New Guinea'],
+  PH: ['Philippines', 'Philippines'],
+  PK: ['Pakistan', 'Pakistan'],
+  PL: ['Pologne', 'Poland'],
+  PM: ['Saint-Pierre-et-Miquelon', 'St. Pierre & Miquelon'],
+  PN: ['Îles Pitcairn', 'Pitcairn Islands'],
+  PR: ['Porto Rico', 'Puerto Rico'],
+  PS: ['Territoires palestiniens', 'Palestinian Territories'],
+  PT: ['Portugal', 'Portugal'],
+  PW: ['Palaos', 'Palau'],
+  PY: ['Paraguay', 'Paraguay'],
+  QA: ['Qatar', 'Qatar'],
+  RE: ['La Réunion', 'Réunion'],
+  RO: ['Roumanie', 'Romania'],
+  RS: ['Serbie', 'Serbia'],
+  RU: ['Russie', 'Russia'],
+  RW: ['Rwanda', 'Rwanda'],
+  SA: ['Arabie saoudite', 'Saudi Arabia'],
+  SB: ['Îles Salomon', 'Solomon Islands'],
+  SC: ['Seychelles', 'Seychelles'],
+  SD: ['Soudan', 'Sudan'],
+  SE: ['Suède', 'Sweden'],
+  SG: ['Singapour', 'Singapore'],
+  SH: ['Sainte-Hélène', 'St. Helena'],
+  SI: ['Slovénie', 'Slovenia'],
+  SJ: ['Svalbard et Jan Mayen', 'Svalbard & Jan Mayen'],
+  SK: ['Slovaquie', 'Slovakia'],
+  SL: ['Sierra Leone', 'Sierra Leone'],
+  SM: ['Saint-Marin', 'San Marino'],
+  SN: ['Sénégal', 'Senegal'],
+  SO: ['Somalie', 'Somalia'],
+  SR: ['Suriname', 'Suriname'],
+  SS: ['Soudan du Sud', 'South Sudan'],
+  ST: ['Sao Tomé-et-Principe', 'São Tomé & Príncipe'],
+  SV: ['Salvador', 'El Salvador'],
+  SX: ['Saint-Martin (partie néerlandaise)', 'Sint Maarten'],
+  SY: ['Syrie', 'Syria'],
+  SZ: ['Eswatini', 'Eswatini'],
+  TC: ['Îles Turques-et-Caïques', 'Turks & Caicos Islands'],
+  TD: ['Tchad', 'Chad'],
+  TF: ['Terres australes françaises', 'French Southern Territories'],
+  TG: ['Togo', 'Togo'],
+  TH: ['Thaïlande', 'Thailand'],
+  TJ: ['Tadjikistan', 'Tajikistan'],
+  TK: ['Tokelau', 'Tokelau'],
+  TL: ['Timor oriental', 'Timor-Leste'],
+  TM: ['Turkménistan', 'Turkmenistan'],
+  TN: ['Tunisie', 'Tunisia'],
+  TO: ['Tonga', 'Tonga'],
+  TR: ['Turquie', 'Türkiye'],
+  TT: ['Trinité-et-Tobago', 'Trinidad & Tobago'],
+  TV: ['Tuvalu', 'Tuvalu'],
+  TW: ['Taïwan', 'Taiwan'],
+  TZ: ['Tanzanie', 'Tanzania'],
+  UA: ['Ukraine', 'Ukraine'],
+  UG: ['Ouganda', 'Uganda'],
+  UM: ['Îles mineures éloignées des États-Unis', 'U.S. Outlying Islands'],
+  US: ['États-Unis', 'United States'],
+  UY: ['Uruguay', 'Uruguay'],
+  UZ: ['Ouzbékistan', 'Uzbekistan'],
+  VA: ['État de la Cité du Vatican', 'Vatican City'],
+  VC: ['Saint-Vincent-et-les Grenadines', 'St. Vincent & Grenadines'],
+  VE: ['Venezuela', 'Venezuela'],
+  VG: ['Îles Vierges britanniques', 'British Virgin Islands'],
+  VI: ['Îles Vierges des États-Unis', 'U.S. Virgin Islands'],
+  VN: ['Viêt Nam', 'Vietnam'],
+  VU: ['Vanuatu', 'Vanuatu'],
+  WF: ['Wallis-et-Futuna', 'Wallis & Futuna'],
+  WS: ['Samoa', 'Samoa'],
+  YE: ['Yémen', 'Yemen'],
+  YT: ['Mayotte', 'Mayotte'],
+  ZA: ['Afrique du Sud', 'South Africa'],
+  ZM: ['Zambie', 'Zambia'],
+  ZW: ['Zimbabwe', 'Zimbabwe'],
+};
 
-export const ALL_COUNTRY_CODES: string[] = ISO_CODES.split(' ');
+export const ALL_COUNTRY_CODES: string[] = Object.keys(NAMES);
 
 export function isCountryCode(code: string): boolean {
-  return ALL_COUNTRY_CODES.includes(code.toUpperCase());
+  return code.toUpperCase() in NAMES;
 }
 
 /** Drapeau dérivé du code : deux indicateurs régionaux Unicode. */
@@ -27,26 +271,28 @@ export function flagOf(code: string): string {
   );
 }
 
-const displayNames = new Map<Locale, Intl.DisplayNames>();
-
 export function countryName(code: string, locale: Locale): string {
-  let names = displayNames.get(locale);
-  if (!names) {
-    names = new Intl.DisplayNames([locale], { type: 'region' });
-    displayNames.set(locale, names);
-  }
-  try {
-    return names.of(code.toUpperCase()) ?? code;
-  } catch {
-    return code;
-  }
+  const entry = NAMES[code.toUpperCase()];
+  if (!entry) return code;
+  return locale === 'en' ? entry[1] : entry[0];
 }
 
-/** Liste triée alphabétiquement dans la langue courante. */
-export function sortedCountries(locale: Locale): { code: string; name: string; flag: string }[] {
+// Tri figé à la construction du module, sans localeCompare : sa collation
+// dépend elle aussi de l'ICU et divergeait entre serveur et client.
+const SORTED: Record<Locale, { code: string; name: string; flag: string }[]> = {
+  fr: [],
+  en: [],
+};
+
+function build(locale: Locale) {
   return ALL_COUNTRY_CODES.map((code) => ({
     code,
     name: countryName(code, locale),
     flag: flagOf(code),
-  })).sort((a, b) => a.name.localeCompare(b.name, locale));
+  })).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
+export function sortedCountries(locale: Locale) {
+  if (SORTED[locale].length === 0) SORTED[locale] = build(locale);
+  return SORTED[locale];
 }

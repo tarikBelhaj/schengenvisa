@@ -9,6 +9,7 @@ import { getI18n } from '@/i18n/server';
 import { auth } from '@/lib/auth';
 import { diffDays, formatDate, todayUtc } from '@/lib/dates';
 import { assessTravel, expiryAlerts } from '@/lib/pets';
+import { typeLabel } from '@/lib/petsLabels';
 import { listDogs } from '@/lib/petsData';
 import { flagOf } from '@/travel-rules';
 
@@ -105,7 +106,7 @@ export default async function PetsPage() {
                     {urgent > 0 && (
                       <p className="mt-3 text-sm text-amber-700">
                         {fmt(alerts[0].daysLeft < 0 ? t.alertExpired : t.alertSoon, {
-                          label: dict.pets[`type${alerts[0].type}` as keyof typeof dict.pets],
+                          label: typeLabel(dict, alerts[0].type),
                           n: Math.abs(alerts[0].daysLeft),
                         })}
                       </p>

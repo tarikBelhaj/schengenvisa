@@ -6,7 +6,9 @@ import { docStatus, effectiveExpiry, type DocStatus } from '@/lib/pets';
 import type { VetRecordDTO } from '@/lib/petsData';
 import { btnDanger } from '@/lib/ui';
 
-import VetRecordForm, { typeLabel } from './VetRecordForm';
+import { typeLabel } from '@/lib/petsLabels';
+
+import VetRecordForm from './VetRecordForm';
 
 const TONE: Record<DocStatus, string> = {
   VALID: 'bg-emerald-50 text-emerald-700',
