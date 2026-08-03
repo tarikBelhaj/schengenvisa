@@ -8,7 +8,7 @@ import { getDict } from '@/i18n/server';
 import { requireUserId } from '@/lib/auth';
 import { toUtcDate } from '@/lib/dates';
 import { prisma } from '@/lib/prisma';
-import { COUNTRY_CODES } from '@/travel-rules';
+import { isCountryCode } from '@/travel-rules';
 
 export interface ActionState {
   error?: string;
@@ -61,7 +61,7 @@ function dogSchema(e: Errors) {
     countryCode: z
       .string()
       .optional()
-      .transform((v) => (v && COUNTRY_CODES.includes(v) ? v : null)),
+      .transform((v) => (v && isCountryCode(v) ? v.toUpperCase() : null)),
     euPassport: optionalText,
     weightKg: z
       .union([z.string(), z.literal('')])

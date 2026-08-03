@@ -10,7 +10,7 @@ import { auth } from '@/lib/auth';
 import { diffDays, formatDate, todayUtc } from '@/lib/dates';
 import { assessTravel, expiryAlerts } from '@/lib/pets';
 import { listDogs } from '@/lib/petsData';
-import { COUNTRIES } from '@/travel-rules';
+import { flagOf } from '@/travel-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +72,7 @@ export default async function PetsPage() {
                         </p>
                         <p className="mt-1 text-sm text-slate-400">
                           {fmt(n > 1 ? t.docCountPlural : t.docCount, { n })}
-                          {dog.countryCode && <> · {COUNTRIES[dog.countryCode]?.flag}</>}
+                          {dog.countryCode && <> · {flagOf(dog.countryCode)}</>}
                         </p>
                       </div>
                     </div>
@@ -120,7 +120,7 @@ export default async function PetsPage() {
         <section className="mt-10 rounded-3xl bg-white p-7 shadow-card">
           <h2 className="text-base font-semibold text-slate-800">{t.addDog}</h2>
           <div className="mt-5">
-            <DogForm dict={dict} />
+            <DogForm dict={dict} locale={locale} />
           </div>
         </section>
       </main>

@@ -1,6 +1,7 @@
 import { france } from './france';
 import { japan } from './japan';
 import { oman } from './oman';
+import { uk } from './uk';
 import type { CountryRules } from './types';
 import { usa } from './usa';
 
@@ -10,6 +11,7 @@ export const COUNTRIES: Record<string, CountryRules> = {
   OM: oman,
   US: usa,
   JP: japan,
+  GB: uk,
 };
 
 export const COUNTRY_CODES = Object.keys(COUNTRIES);
@@ -18,4 +20,5 @@ export function getCountry(code: string): CountryRules | null {
   return COUNTRIES[code.toUpperCase()] ?? null;
 }
 
+export { ALL_COUNTRY_CODES, countryName, flagOf, isCountryCode, sortedCountries } from './countries';
 export type { CountryRules, Requirement, VetRecordType } from './types';

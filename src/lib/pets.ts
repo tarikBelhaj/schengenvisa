@@ -72,6 +72,8 @@ export interface Check {
   status: CheckStatus;
   /** Le document retenu, le plus récent du bon type. */
   recordId?: string;
+  /** Date du document retenu, en numéro de jour UTC. */
+  recordDay?: number;
   expiryDay: number | null;
   /** Jours manquants avant que la condition soit remplie, si applicable. */
   daysShort?: number;
@@ -122,7 +124,7 @@ function evaluateRequirement(
 
   const recordDay = toEpochDay(record.date);
   const expiryDay = effectiveExpiry(record, requirement.validityDays);
-  const result = { ...base, recordId: record.id, expiryDay };
+  const result = { ...base, recordId: record.id, recordDay, expiryDay };
 
   // Ordre imposé : le titrage doit suivre la vaccination, par exemple.
   if (requirement.requiresAfter) {

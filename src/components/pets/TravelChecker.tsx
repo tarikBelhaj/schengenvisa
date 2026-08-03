@@ -4,11 +4,11 @@ import { useMemo, useState } from 'react';
 
 import { fmt, type Locale } from '@/i18n/config';
 import type { Dict } from '@/i18n/dictionaries';
-import { formatDate, toIsoDate, todayUtc } from '@/lib/dates';
+import { formatDate, fromEpochDay, toIsoDate, todayUtc } from '@/lib/dates';
 import { assessTravel, earliestTravelDate, type Check, type DogLike } from '@/lib/pets';
 import type { DogDTO } from '@/lib/petsData';
 import { input, label } from '@/lib/ui';
-import { COUNTRIES, COUNTRY_CODES } from '@/travel-rules';
+import { COUNTRIES, COUNTRY_CODES, sortedCountries } from '@/travel-rules';
 
 function checkMessage(check: Check, dict: Dict, locale: Locale, countryCode: string): string {
   const requirement = COUNTRIES[countryCode]?.requirements.find(
@@ -109,6 +109,13 @@ export default function TravelChecker({ dog, dict, locale }: TravelCheckerProps)
     return earliestTravelDate(dogLike, dog.records, to, date);
   }, [assessment, dogLike, dog.records, to, date]);
 
+  // Le vaccin antirabique est la pierre angulaire : sa date conditionne le
+  // titrage, donc la date de départ possible.
+  const rabiesCheck = assessment?.checks.find(
+    (c) => c.type === 'RABIES_VACCINE' && c.recordDay != null,
+  );
+  const needsTiter = assessment?.checks.some((c) => c.type === 'RABIES_TITER');
+
   const blockerMessage = (kind: string, detail?: string) => {
     switch (kind) {
       case 'AGE':
@@ -138,9 +145,9 @@ export default function TravelChecker({ dog, dict, locale }: TravelCheckerProps)
               value={from}
               onChange={(e) => setFrom(e.target.value)}
             >
-              {COUNTRY_CODES.map((code) => (
-                <option key={code} value={code}>
-                  {COUNTRIES[code].flag} {COUNTRIES[code].name[locale]}
+              {sortedCountries(locale).map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.name}
                 </option>
               ))}
             </select>
@@ -214,6 +221,28 @@ export default function TravelChecker({ dog, dict, locale }: TravelCheckerProps)
             </div>
           </div>
 
+          {rabiesCheck && (
+            <div className="mx-6 mb-4 rounded-2xl bg-brand-50 px-4 py-3">
+              <p className="text-sm font-semibold text-brand-800">
+                {fmt(t.titerRabiesDate, {
+                  date: formatDate(fromEpochDay(rabiesCheck.recordDay!), locale),
+                })}
+              </p>
+            </div>
+          )}
+
+          {needsTiter && (
+            <details className="mx-6 mb-4 rounded-2xl bg-slate-50 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-700">
+                ℹ️ {t.titerTitle}
+              </summary>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{t.titerBody}</p>
+              {to === 'OM' && (
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{t.titerOman}</p>
+              )}
+            </details>
+          )}
+
           <div className="space-y-2 px-6 pb-6">
             {assessment.blockers.map((blocker) => (
               <p
@@ -244,6 +273,21 @@ export default function TravelChecker({ dog, dict, locale }: TravelCheckerProps)
                     <span className="shrink-0">{ok ? '✅' : check.mandatory ? '❌' : '•'}</span>
                     <div className="min-w-0">
                       <p className="font-medium">{checkMessage(check, dict, locale, to)}</p>
+                      {check.recordDay != null && (
+                        <p className="mt-0.5 text-xs opacity-75">
+                          {fmt(t.docDated, {
+                            date: formatDate(fromEpochDay(check.recordDay), locale),
+                          })}
+                          {check.expiryDay != null && (
+                            <>
+                              {' · '}
+                              {fmt(t.docUntil, {
+                                date: formatDate(fromEpochDay(check.expiryDay), locale),
+                              })}
+                            </>
+                          )}
+                        </p>
+                      )}
                       {!ok && requirement?.detail && (
                         <p className="mt-1 text-xs opacity-80">{requirement.detail[locale]}</p>
                       )}

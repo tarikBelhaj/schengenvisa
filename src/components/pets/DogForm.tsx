@@ -5,10 +5,11 @@ import { useFormState, useFormStatus } from 'react-dom';
 
 import { saveDog, type ActionState } from '@/app/pets/actions';
 import PhotoInput from '@/components/PhotoInput';
+import type { Locale } from '@/i18n/config';
 import type { Dict } from '@/i18n/dictionaries';
 import type { DogDTO } from '@/lib/petsData';
 import { btnPrimary, input, label } from '@/lib/ui';
-import { COUNTRIES, COUNTRY_CODES } from '@/travel-rules';
+import { sortedCountries } from '@/travel-rules';
 
 function SubmitButton({ children, saving }: { children: React.ReactNode; saving: string }) {
   const { pending } = useFormStatus();
@@ -19,7 +20,15 @@ function SubmitButton({ children, saving }: { children: React.ReactNode; saving:
   );
 }
 
-export default function DogForm({ dog, dict }: { dog?: DogDTO; dict: Dict }) {
+export default function DogForm({
+  dog,
+  dict,
+  locale,
+}: {
+  dog?: DogDTO;
+  dict: Dict;
+  locale: Locale;
+}) {
   const [state, formAction] = useFormState<ActionState, FormData>(saveDog, {});
   const [name, setName] = useState(dog?.name ?? '');
   const t = dict.pets;
@@ -136,9 +145,9 @@ export default function DogForm({ dog, dict }: { dog?: DogDTO; dict: Dict }) {
             defaultValue={dog?.countryCode ?? ''}
           >
             <option value="">—</option>
-            {COUNTRY_CODES.map((code) => (
-              <option key={code} value={code}>
-                {COUNTRIES[code].flag} {COUNTRIES[code].name.fr}
+            {sortedCountries(locale).map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.flag} {country.name}
               </option>
             ))}
           </select>

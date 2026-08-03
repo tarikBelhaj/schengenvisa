@@ -37,11 +37,13 @@ export const oman: CountryRules = {
       label: { fr: 'Titrage antirabique (RNATT/FAVN)', en: 'Rabies titer test (RNATT/FAVN)' },
       mandatory: true,
       validityDays: 365,
-      minDaysBeforeTravel: 21,
+      // Règle des 3 mois : Oman impose un délai de 90 jours entre la prise de
+      // sang et l'entrée sur le territoire.
+      minDaysBeforeTravel: 90,
       requiresAfter: 'rabies',
       detail: {
-        fr: 'Prise de sang postérieure à la vaccination, réalisée dans un laboratoire agréé. Résultat ≥ 0,5 UI/ml.',
-        en: 'Blood sample taken after vaccination, in an approved laboratory. Result ≥ 0.5 IU/ml.',
+        fr: 'Prise de sang au moins 30 jours après la vaccination, dans un laboratoire agréé, résultat ≥ 0,5 UI/ml. Puis 3 mois d’attente avant l’entrée à Oman.',
+        en: 'Blood sample at least 30 days after vaccination, in an approved laboratory, result ≥ 0.5 IU/ml. Then a 3-month wait before entering Oman.',
       },
     },
     {

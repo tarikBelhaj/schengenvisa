@@ -11,7 +11,14 @@ import {
   type DogLike,
   type RecordLike,
 } from './pets';
-import { COUNTRY_CODES, getCountry } from '@/travel-rules';
+import {
+  ALL_COUNTRY_CODES,
+  COUNTRY_CODES,
+  countryName,
+  flagOf,
+  getCountry,
+  isCountryCode,
+} from '@/travel-rules';
 
 const TRAVEL = '2026-06-01';
 
@@ -41,8 +48,8 @@ function omanFullFile(): RecordLike[] {
 }
 
 describe('registre des pays', () => {
-  it('expose les quatre pays', () => {
-    expect(COUNTRY_CODES.sort()).toEqual(['FR', 'JP', 'OM', 'US']);
+  it('expose les cinq pays', () => {
+    expect(COUNTRY_CODES.sort()).toEqual(['FR', 'GB', 'JP', 'OM', 'US']);
   });
 
   it('est insensible à la casse', () => {
@@ -262,5 +269,90 @@ describe('earliestTravelDate', () => {
   it('rend null quand un blocage est définitif', () => {
     const banned: DogLike = { ...dog, breed: 'Pit Bull' };
     expect(earliestTravelDate(banned, omanFullFile(), 'OM', TRAVEL)).toBeNull();
+  });
+});
+
+describe('liste ISO des pays', () => {
+  it('couvre les 249 codes et contient GB', () => {
+    expect(ALL_COUNTRY_CODES.length).toBeGreaterThan(240);
+    expect(ALL_COUNTRY_CODES).toContain('GB');
+    expect(isCountryCode('gb')).toBe(true);
+    expect(isCountryCode('ZZ')).toBe(false);
+  });
+
+  it('n’a aucun doublon', () => {
+    expect(new Set(ALL_COUNTRY_CODES).size).toBe(ALL_COUNTRY_CODES.length);
+  });
+
+  it('dérive le drapeau du code', () => {
+    expect(flagOf('GB')).toBe('🇬🇧');
+    expect(flagOf('FR')).toBe('🇫🇷');
+    expect(flagOf('X')).toBe('');
+  });
+
+  it('traduit le nom selon la langue', () => {
+    expect(countryName('GB', 'fr')).toMatch(/Royaume-Uni/);
+    expect(countryName('GB', 'en')).toMatch(/United Kingdom/);
+  });
+
+  it('inclut tous les pays à règles dans la liste ISO', () => {
+    for (const code of COUNTRY_CODES) expect(ALL_COUNTRY_CODES).toContain(code);
+  });
+});
+
+describe('Royaume-Uni', () => {
+  const ukDog: DogLike = { ...dog, breed: 'Labrador' };
+
+  it('valide un dossier complet', () => {
+    const records = [
+      rec('RABIES_VACCINE', '2026-01-10', '2027-01-10'),
+      rec('HEALTH_CERTIFICATE', '2026-05-25'),
+      rec('DEWORMING', '2026-05-29'), // 3 j avant : dans la fenêtre 24-120 h
+    ];
+    expect(assessTravel(ukDog, records, 'GB', TRAVEL)!.compliant).toBe(true);
+  });
+
+  it('refuse un ténia traité trop tôt', () => {
+    const records = [
+      rec('RABIES_VACCINE', '2026-01-10', '2027-01-10'),
+      rec('HEALTH_CERTIFICATE', '2026-05-25'),
+      rec('DEWORMING', '2026-05-20'), // 12 j avant : hors fenêtre
+    ];
+    const a = assessTravel(ukDog, records, 'GB', TRAVEL)!;
+    expect(a.checks.find((c) => c.requirementId === 'tapeworm')?.status).toBe('TOO_OLD');
+  });
+
+  it('interdit l’XL Bully', () => {
+    const a = assessTravel({ ...dog, breed: 'XL Bully' }, [], 'GB', TRAVEL)!;
+    expect(a.blockers.map((b) => b.kind)).toContain('BREED');
+  });
+});
+
+describe('Oman — règle des 3 mois sur le titrage', () => {
+  it('exige 90 jours entre la prise de sang et l’entrée', () => {
+    const titer = getCountry('OM')!.requirements.find((r) => r.id === 'titer')!;
+    expect(titer.minDaysBeforeTravel).toBe(90);
+  });
+
+  it('refuse un titrage vieux de 60 jours et chiffre l’attente', () => {
+    const records = omanFullFile().map((r) =>
+      r.type === 'RABIES_TITER' ? rec('RABIES_TITER', '2026-04-02', '2027-04-02') : r,
+    );
+    const a = assessTravel(dog, records, 'OM', TRAVEL)!;
+    const check = a.checks.find((c) => c.requirementId === 'titer')!;
+    expect(check.status).toBe('TOO_RECENT');
+    expect(check.daysShort).toBe(30); // 90 requis, 60 écoulés
+  });
+
+  it('accepte un titrage vieux de 111 jours', () => {
+    const a = assessTravel(dog, omanFullFile(), 'OM', TRAVEL)!;
+    expect(a.checks.find((c) => c.requirementId === 'titer')?.status).toBe('OK');
+  });
+
+  it('expose la date du document dans le résultat', () => {
+    const a = assessTravel(dog, omanFullFile(), 'OM', TRAVEL)!;
+    const rabies = a.checks.find((c) => c.requirementId === 'rabies')!;
+    expect(rabies.recordDay).toBeDefined();
+    expect(toIsoDate(rabies.recordDay! * 86_400_000)).toBe('2026-01-10');
   });
 });

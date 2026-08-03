@@ -15,7 +15,7 @@ import { diffDays, todayUtc } from '@/lib/dates';
 import { expiryAlerts } from '@/lib/pets';
 import { getDog } from '@/lib/petsData';
 import { btnDanger } from '@/lib/ui';
-import { COUNTRIES } from '@/travel-rules';
+import { countryName, flagOf } from '@/travel-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,7 +62,12 @@ export default async function DogPage({ params }: { params: { id: string } }) {
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{dog.name}</h1>
             <p className="mt-1 text-sm text-slate-400">
               {dog.breed ?? t.noBreed} · {ageText}
-              {dog.countryCode && <> · {COUNTRIES[dog.countryCode]?.flag}</>}
+              {dog.countryCode && (
+                <>
+                  {' '}
+                  · {flagOf(dog.countryCode)} {countryName(dog.countryCode, locale)}
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -119,7 +124,7 @@ export default async function DogPage({ params }: { params: { id: string } }) {
             <section className="rounded-3xl bg-white p-7 shadow-card">
               <h2 className="text-base font-semibold text-slate-800">{t.profile}</h2>
               <div className="mt-5">
-                <DogForm dog={dog} dict={dict} />
+                <DogForm dog={dog} dict={dict} locale={locale} />
               </div>
 
               <form action={deleteDog} className="mt-6 border-t border-brand-50 pt-5">
