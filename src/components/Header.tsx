@@ -28,9 +28,25 @@ interface HeaderProps {
 export default function Header({ email, dict, locale }: HeaderProps) {
   return (
     <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6">
-      <Link href="/dashboard">
-        <Wordmark />
-      </Link>
+      <div className="flex items-center gap-6">
+        <Link href="/dashboard">
+          <Wordmark />
+        </Link>
+        <nav className="flex items-center gap-1 rounded-full bg-white p-1 shadow-sm">
+          <Link
+            href="/dashboard"
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium text-slate-500 transition hover:text-brand-600"
+          >
+            Schengen
+          </Link>
+          <Link
+            href="/pets"
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium text-slate-500 transition hover:text-brand-600"
+          >
+            {dict.pets.nav}
+          </Link>
+        </nav>
+      </div>
       <div className="flex items-center gap-3">
         {email && <span className="hidden text-sm text-slate-500 sm:inline">{email}</span>}
         <LanguageSwitcher current={locale} />

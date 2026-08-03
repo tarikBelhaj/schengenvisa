@@ -24,6 +24,7 @@ model User {
   accounts Account[]
   sessions Session[]
   persons  Person[]
+  dogs     Dog[]
 }
 
 model Account {
@@ -107,4 +108,69 @@ model Trip {
 
   @@index([personId])
   @@index([personId, entryDate])
+}
+
+// Pets Entry
+
+enum DogSex {
+  MALE
+  FEMALE
+}
+
+enum VetRecordType {
+  RABIES_VACCINE
+  CHPPI_VACCINE
+  LEPTOSPIROSIS_VACCINE
+  BORDETELLA_VACCINE
+  DEWORMING
+  ANTIPARASITIC
+  RABIES_TITER
+  HEALTH_CERTIFICATE
+  IMPORT_PERMIT
+  OTHER
+}
+
+model Dog {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  breed         String?
+  sex           DogSex?
+  birthDate     DateTime? @db.Date
+  microchip     String?
+  photo         String?   @db.Text
+  // ISO 3166-1 alpha-2, aligné sur les clés de src/travel-rules.
+  countryCode   String?
+  euPassport    String?
+  weightKg      Float?
+  color         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  records VetRecord[]
+
+  @@index([userId])
+}
+
+model VetRecord {
+  id        String        @id @default(cuid())
+  dogId     String
+  type      VetRecordType
+  date      DateTime      @db.Date
+  // null = document sans échéance (certificat ponctuel, note…).
+  expiresAt DateTime?     @db.Date
+  note      String?
+  label     String?
+  // Pièce jointe en data URL. Voir MAX_ATTACHMENT_BYTES côté validation.
+  fileName  String?
+  fileType  String?
+  fileData  String?       @db.Text
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  dog Dog @relation(fields: [dogId], references: [id], onDelete: Cascade)
+
+  @@index([dogId])
+  @@index([dogId, date])
 }
