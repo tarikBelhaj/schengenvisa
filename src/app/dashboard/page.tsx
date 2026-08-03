@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import Avatar from '@/components/Avatar';
 import { GaugeBar } from '@/components/Gauge';
 import Header from '@/components/Header';
 import PersonForm from '@/components/PersonForm';
@@ -63,13 +64,16 @@ export default async function DashboardPage() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar name={person.name} photo={person.photo} />
+                        <div className="min-w-0">
                         <h2 className="font-semibold text-slate-800">{person.name}</h2>
                         <p className="mt-1 text-sm text-slate-400">
                           {person.nationality ?? t.noNationality}
                           {' · '}
                           {fmt(n > 1 ? t.tripCountPlural : t.tripCount, { n })}
                         </p>
+                        </div>
                       </div>
                       {overage && (
                         <span className="shrink-0 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">

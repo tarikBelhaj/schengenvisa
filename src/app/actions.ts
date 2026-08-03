@@ -46,6 +46,13 @@ function personSchema(e: Errors) {
     name: z.string().trim().min(1, e.nameRequired).max(120),
     nationality: optionalText,
     notes: optionalText,
+    // Vignette 256px en data URL : quelques dizaines de Ko.
+    photo: z
+      .string()
+      .max(400_000, e.invalid)
+      .refine((v) => v === '' || v.startsWith('data:image/'), e.invalid)
+      .optional()
+      .transform((v) => (v ? v : null)),
   });
 }
 
@@ -90,6 +97,7 @@ export async function savePerson(_prev: ActionState, formData: FormData): Promis
     name: formData.get('name') ?? '',
     nationality: formData.get('nationality') ?? '',
     notes: formData.get('notes') ?? '',
+    photo: formData.get('photo') ?? '',
   });
   if (!parsed.success) return { error: firstError(parsed.error, e) };
 

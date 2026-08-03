@@ -144,6 +144,11 @@ const fr = {
     nationality: 'Nationalité',
     nationalityPlaceholder: 'Tunisienne, Marocaine…',
     notes: 'Notes',
+    photo: 'Photo',
+    photoAdd: 'Ajouter une photo',
+    photoChange: 'Changer',
+    photoNotImage: 'Ce fichier n’est pas une image.',
+    photoFailed: 'Impossible de lire cette image.',
     submit: 'Ajouter la personne',
   },
   errors: {
@@ -300,6 +305,11 @@ const en: Dict = {
     nationality: 'Nationality',
     nationalityPlaceholder: 'Tunisian, Moroccan…',
     notes: 'Notes',
+    photo: 'Photo',
+    photoAdd: 'Add a photo',
+    photoChange: 'Change',
+    photoNotImage: 'This file is not an image.',
+    photoFailed: 'Could not read this image.',
     submit: 'Add person',
   },
   errors: {

@@ -73,6 +73,9 @@ model Person {
   name        String
   nationality String?
   notes       String?
+  // Data URL JPEG, redimensionnée à 256px avant envoi. Pas de stockage
+  // externe à gérer pour une poignée de vignettes.
+  photo       String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 
 import { savePerson, type ActionState } from '@/app/actions';
 import type { Dict } from '@/i18n/dictionaries';
 import type { PersonDTO } from '@/lib/data';
 import { btnPrimary, input, label } from '@/lib/ui';
+
+import PhotoInput from './PhotoInput';
 
 function SubmitButton({ children, saving }: { children: React.ReactNode; saving: string }) {
   const { pending } = useFormStatus();
@@ -18,11 +21,15 @@ function SubmitButton({ children, saving }: { children: React.ReactNode; saving:
 
 export default function PersonForm({ person, dict }: { person?: PersonDTO; dict: Dict }) {
   const [state, formAction] = useFormState<ActionState, FormData>(savePerson, {});
+  // Suivi du nom pour que les initiales de l'aperçu se mettent à jour.
+  const [name, setName] = useState(person?.name ?? '');
   const t = dict.personForm;
 
   return (
     <form action={formAction} className="space-y-4">
       {person && <input type="hidden" name="id" value={person.id} />}
+
+      <PhotoInput name={name} dict={dict} initialPhoto={person?.photo} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -34,7 +41,8 @@ export default function PersonForm({ person, dict }: { person?: PersonDTO; dict:
             className={`${input} mt-1.5`}
             name="name"
             required
-            defaultValue={person?.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder={t.namePlaceholder}
           />
         </div>

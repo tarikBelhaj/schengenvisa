@@ -17,6 +17,7 @@ export interface PersonDTO {
   name: string;
   nationality: string | null;
   notes: string | null;
+  photo: string | null;
   trips: TripDTO[];
 }
 
@@ -59,6 +60,7 @@ export async function listPersons(userId: string): Promise<PersonDTO[]> {
       name: true,
       nationality: true,
       notes: true,
+      photo: true,
       trips: { select: tripSelect, orderBy: { entryDate: 'asc' } },
     },
   });
@@ -78,6 +80,7 @@ export async function getPerson(userId: string, personId: string): Promise<Perso
       name: true,
       nationality: true,
       notes: true,
+      photo: true,
       trips: { select: tripSelect, orderBy: { entryDate: 'asc' } },
     },
   });

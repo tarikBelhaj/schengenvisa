@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { deletePerson } from '@/app/actions';
+import Avatar from '@/components/Avatar';
 import Gauge from '@/components/Gauge';
 import Header from '@/components/Header';
 import PersonForm from '@/components/PersonForm';
@@ -45,12 +46,17 @@ export default async function PersonPage({ params }: { params: { id: string } })
         </Link>
 
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{person.name}</h1>
-            <p className="mt-1 text-sm text-slate-400">
-              {person.nationality ?? dict.dashboard.noNationality}
-              {person.notes && <> · {person.notes}</>}
-            </p>
+          <div className="flex items-center gap-4">
+            <Avatar name={person.name} photo={person.photo} size={56} />
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+                {person.name}
+              </h1>
+              <p className="mt-1 text-sm text-slate-400">
+                {person.nationality ?? dict.dashboard.noNationality}
+                {person.notes && <> · {person.notes}</>}
+              </p>
+            </div>
           </div>
           <p className="text-sm text-slate-400">
             {fmt(dict.common.on, { date: formatDate(today, locale) })}
