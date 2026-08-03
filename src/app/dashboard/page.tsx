@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import Avatar from '@/components/Avatar';
+import AlertEmailForm from '@/components/AlertEmailForm';
 import { GaugeBar } from '@/components/Gauge';
 import Header from '@/components/Header';
 import PersonForm from '@/components/PersonForm';
@@ -9,6 +10,7 @@ import { fmt } from '@/i18n/config';
 import { getI18n } from '@/i18n/server';
 import { auth } from '@/lib/auth';
 import { listPersons } from '@/lib/data';
+import { prisma } from '@/lib/prisma';
 import { formatDate, todayUtc } from '@/lib/dates';
 import { daysPresentInWindow, findFirstOverage, nextPlannedTrip } from '@/lib/schengen';
 
@@ -21,7 +23,13 @@ export default async function DashboardPage() {
   const { locale, dict } = getI18n();
   const t = dict.dashboard;
 
-  const persons = await listPersons(session.user.id);
+  const [persons, account] = await Promise.all([
+    listPersons(session.user.id),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { alertEmail: true },
+    }),
+  ]);
   const today = todayUtc();
   const flagged = persons.filter((p) => findFirstOverage(p.trips, today) !== null).length;
 
@@ -116,6 +124,13 @@ export default async function DashboardPage() {
         )}
 
         <section className="mt-10 rounded-3xl bg-white p-7 shadow-card">
+          <h2 className="text-base font-semibold text-slate-800">{dict.alerts.title}</h2>
+          <div className="mt-5">
+            <AlertEmailForm dict={dict} current={account?.alertEmail ?? null} />
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl bg-white p-7 shadow-card">
           <h2 className="text-base font-semibold text-slate-800">{t.addPerson}</h2>
           <div className="mt-5">
             <PersonForm dict={dict} />

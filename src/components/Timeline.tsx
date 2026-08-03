@@ -3,7 +3,13 @@ import { fmt, type Locale } from '@/i18n/config';
 import type { Dict } from '@/i18n/dictionaries';
 import type { TripDTO } from '@/lib/data';
 import { formatDate, inclusiveDays, toEpochDay, todayUtc } from '@/lib/dates';
-import { daysPresentInWindow, MAX_DAYS, maxStayFromEntry } from '@/lib/schengen';
+import {
+  daysPresentInWindow,
+  historyClearDate,
+  MAX_DAYS,
+  maxStayFromEntry,
+  windowRange,
+} from '@/lib/schengen';
 import { btnDanger } from '@/lib/ui';
 
 import TripForm from './TripForm';
@@ -53,6 +59,14 @@ export default function Timeline({ personId, trips, dict, locale }: TimelineProp
         // Inclure le séjour lui-même est sans effet : ses jours sont déjà
         // dans la simulation et l'union ne les compte qu'une fois.
         const stay = isPlanned || future ? maxStayFromEntry(trips, trip.entryDate) : null;
+        // Les autres séjours, pour expliquer d'où vient le crédit disponible.
+        const others = trips.filter((other) => other.id !== trip.id);
+        const clearDate = stay ? historyClearDate(others, trip.entryDate) : null;
+        const entryWindow = stay ? windowRange(trip.entryDate) : null;
+        // Sur les autres séjours seulement : maxStayFromEntry compte aussi le
+        // jour d'entrée du séjour courant, ce qui gonflerait le chiffre de 1.
+        const usedBefore = stay ? daysPresentInWindow(others, trip.entryDate) : 0;
+        const naive = MAX_DAYS - usedBefore;
         const plannedExitDay = trip.exitDate ? toEpochDay(trip.exitDate) : null;
         const excess =
           stay?.maxExitDate && plannedExitDay !== null
@@ -142,6 +156,38 @@ export default function Timeline({ personId, trips, dict, locale }: TimelineProp
                     <p className="mt-0.5 text-xs text-slate-500">
                       {fmt(dict.timeline.canStayDays, { n: stay.allowedDays })}
                     </p>
+
+                    <div className="mt-3 space-y-1.5 border-t border-white/70 pt-3 text-xs leading-relaxed text-slate-600">
+                      {usedBefore === 0 ? (
+                        <p>{dict.timeline.stayNoHistory}</p>
+                      ) : (
+                        <>
+                          <p>
+                            {fmt(dict.timeline.stayUsedAtEntry, {
+                              date: formatDate(trip.entryDate, locale),
+                              n: usedBefore,
+                              start: formatDate(entryWindow!.start, locale),
+                              end: formatDate(entryWindow!.end, locale),
+                            })}
+                          </p>
+                          <p>
+                            <span className="text-slate-500">
+                              {fmt(dict.timeline.stayNaive, { n: naive })}
+                            </span>{' '}
+                            {stay.allowedDays > naive && clearDate ? (
+                              <span className="font-medium text-brand-700">
+                                {fmt(dict.timeline.stayRelease, {
+                                  n: stay.allowedDays,
+                                  date: formatDate(clearDate, locale),
+                                })}
+                              </span>
+                            ) : (
+                              <span>{dict.timeline.stayNoRelease}</span>
+                            )}
+                          </p>
+                        </>
+                      )}
+                    </div>
                     {excess > 0 && (
                       <p className="mt-1.5 text-xs font-medium text-rose-600">
                         {fmt(dict.timeline.exceeds, {

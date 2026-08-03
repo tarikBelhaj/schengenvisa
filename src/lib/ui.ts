@@ -22,5 +22,5 @@ export const btnGhost =
   'text-sm font-medium text-slate-600 shadow-sm transition hover:border-brand-300 hover:text-brand-600';
 
 export const btnDanger =
-  'inline-flex items-center justify-center rounded-full border border-transparent px-4 py-2 ' +
-  'text-sm text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600';
+  'inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 ' +
+  'text-sm font-medium text-rose-600 transition hover:border-rose-300 hover:bg-rose-100';

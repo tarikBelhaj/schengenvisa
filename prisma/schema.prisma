@@ -21,10 +21,14 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
 
+  // Adresse de notification, distincte de celle du compte Google.
+  alertEmail String?
+
   accounts Account[]
   sessions Session[]
   persons  Person[]
   dogs     Dog[]
+  alerts   SentAlert[]
 }
 
 model Account {
@@ -173,4 +177,26 @@ model VetRecord {
 
   @@index([dogId])
   @@index([dogId, date])
+}
+
+enum AlertKind {
+  DAYS_10
+  DAYS_0
+  OVERAGE
+}
+
+// Une ligne par alerte en cours. Elle est supprimée dès que la condition
+// retombe, ce qui donne un envoi par franchissement et non un par jour.
+model SentAlert {
+  id        String    @id @default(cuid())
+  userId    String
+  personId  String
+  kind      AlertKind
+  daysLeft  Int
+  sentAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, kind])
+  @@index([userId])
 }

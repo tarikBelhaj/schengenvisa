@@ -111,6 +111,15 @@ const fr = {
     canStayDays: '{n} jours maximum depuis cette entrée',
     exceeds: 'Ce séjour dépasse de {n} jour(s) — sortie prévue le {date}',
     cannotEnter: 'Entrée impossible à cette date : le quota est déjà atteint',
+    stayUsedAtEntry:
+      'Au {date}, {n} jours sont déjà consommés dans la fenêtre ({start} → {end}).',
+    stayNoHistory: 'Aucun séjour antérieur ne pèse sur cette entrée : les 90 jours sont entiers.',
+    stayNaive: 'Un décompte simple donnerait {n} jours.',
+    stayRelease:
+      'En réalité {n} : vos séjours antérieurs quittent la fenêtre de 180 jours pendant celui-ci, le dernier le {date}.',
+    stayNoRelease:
+      'Aucun séjour antérieur ne sort de la fenêtre pendant ce voyage : le crédit reste celui-là.',
+    stayContribution: 'Séjour du {start} au {end} : {n} jour(s) encore comptés.',
   },
   simulator: {
     title: 'Simulateur',
@@ -130,6 +139,8 @@ const fr = {
     entry: 'Entrée',
     exit: 'Sortie',
     exitHint: 'Vide = séjour en cours',
+    ongoingTrip: 'Séjour en cours, sans date de sortie',
+    futureIsPlanned: 'Une entrée à venir est forcément un séjour planifié.',
     status: 'Statut',
     statusPast: 'Passé',
     statusPlanned: 'Planifié',
@@ -250,6 +261,15 @@ const fr = {
     typeIMPORT_PERMIT: 'Permis d’importation',
     typeOTHER: 'Autre document',
   },
+  alerts: {
+    title: 'Alertes par e-mail',
+    emailLabel: 'Adresse de notification',
+    emailSaved: 'Adresse enregistrée.',
+    emailHint:
+      'Un e-mail est envoyé quand il reste 10 jours, quand le quota est épuisé, et en cas de dépassement. Laissez vide pour ne rien recevoir.',
+    onTerritory: 'Séjour en cours',
+    daysLeftNow: '{n} jour(s) restants',
+  },
   errors: {
     nameRequired: 'Le nom est obligatoire',
     dateFormat: 'Date attendue au format AAAA-MM-JJ',
@@ -260,6 +280,7 @@ const fr = {
     recordNotFound: 'Document introuvable',
     fileTooLarge: 'Fichier trop volumineux (700 Ko maximum)',
     expiryBeforeDate: 'L’expiration doit suivre la date du document',
+    emailInvalid: 'Adresse e-mail invalide',
     invalid: 'Données invalides',
   },
 } as const;
@@ -376,6 +397,13 @@ const en: Dict = {
     canStayDays: '{n} days maximum from this entry',
     exceeds: 'This trip goes over by {n} day(s) — exit planned on {date}',
     cannotEnter: 'Entry not possible on this date: the quota is already used up',
+    stayUsedAtEntry: 'On {date}, {n} days are already used in the window ({start} → {end}).',
+    stayNoHistory: 'No earlier stay weighs on this entry: the full 90 days are available.',
+    stayNaive: 'A plain subtraction would give {n} days.',
+    stayRelease:
+      'In reality {n}: your earlier stays leave the 180-day window during this one, the last on {date}.',
+    stayNoRelease: 'No earlier stay leaves the window during this trip, so the credit stands.',
+    stayContribution: 'Stay from {start} to {end}: {n} day(s) still counted.'
   },
   simulator: {
     title: 'Simulator',
@@ -394,6 +422,8 @@ const en: Dict = {
     entry: 'Entry',
     exit: 'Exit',
     exitHint: 'Empty = ongoing stay',
+    ongoingTrip: 'Ongoing stay, no exit date yet',
+    futureIsPlanned: 'A future entry can only be a planned stay.',
     status: 'Status',
     statusPast: 'Past',
     statusPlanned: 'Planned',
@@ -514,6 +544,15 @@ const en: Dict = {
     typeIMPORT_PERMIT: 'Import permit',
     typeOTHER: 'Other document',
   },
+  alerts: {
+    title: 'Email alerts',
+    emailLabel: 'Notification address',
+    emailSaved: 'Address saved.',
+    emailHint:
+      'An email is sent when 10 days remain, when the quota runs out, and on an overstay. Leave empty to receive nothing.',
+    onTerritory: 'Ongoing stay',
+    daysLeftNow: '{n} day(s) left',
+  },
   errors: {
     nameRequired: 'Name is required',
     dateFormat: 'Date expected in YYYY-MM-DD format',
@@ -524,6 +563,7 @@ const en: Dict = {
     recordNotFound: 'Document not found',
     fileTooLarge: 'File too large (700 KB maximum)',
     expiryBeforeDate: 'Expiry must follow the document date',
+    emailInvalid: 'Invalid email address',
     invalid: 'Invalid data',
   },
 };

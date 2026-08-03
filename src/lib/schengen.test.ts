@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { inclusiveDays, toEpochDay, toIsoDate } from './dates';
 import {
   daysPresentInWindow,
+  historyClearDate,
+  MAX_DAYS,
   daysRemaining,
   findFirstOverage,
   maxStayFromEntry,
@@ -258,5 +260,43 @@ describe('nextPlannedTrip', () => {
 
   it('rend null quand il n\'y a plus rien de planifié', () => {
     expect(nextPlannedTrip(trips, '2026-01-01')).toBeNull();
+  });
+});
+
+describe('historyClearDate', () => {
+  // Le cas réel : deux séjours en été, entrée planifiée le 1er décembre.
+  const trips = [past('2026-06-21', '2026-07-17'), past('2026-07-21', '2026-08-10')];
+
+  it('compte 48 jours consommés au jour de l’entrée', () => {
+    expect(daysPresentInWindow(trips, '2026-12-01')).toBe(48);
+  });
+
+  it('rend la date de sortie du dernier jour de la fenêtre', () => {
+    // 2026-08-10 est le dernier jour compté ; il sort 180 jours plus tard.
+    expect(toIsoDate(historyClearDate(trips, '2026-12-01')!)).toBe('2027-02-06');
+  });
+
+  it('autorise 90 jours pleins alors qu’un décompte simple en donnerait 42', () => {
+    const r = maxStayFromEntry(trips, '2026-12-01');
+    expect(r.daysUsedAtEntry).toBe(48);
+    expect(MAX_DAYS - r.daysUsedAtEntry).toBe(42);
+    expect(r.allowedDays).toBe(90);
+    expect(toIsoDate(r.maxExitDate!)).toBe('2027-02-28');
+  });
+
+  it('rend null quand rien n’est compté dans la fenêtre', () => {
+    expect(historyClearDate(trips, '2028-01-01')).toBeNull();
+  });
+});
+
+describe('explication affichée sur un séjour planifié', () => {
+  const others = [past('2026-06-21', '2026-07-17'), past('2026-07-21', '2026-08-10')];
+  const planned = { entryDate: '2026-12-01', exitDate: '2026-12-31', status: 'PLANNED' as const };
+
+  it('ne compte pas le séjour courant dans la consommation antérieure', () => {
+    // Sur tous les séjours, le jour d'entrée du séjour planifié compte pour 1.
+    expect(daysPresentInWindow([...others, planned], '2026-12-01')).toBe(49);
+    // Sur les autres seulement, le chiffre à afficher.
+    expect(daysPresentInWindow(others, '2026-12-01')).toBe(48);
   });
 });

@@ -8,11 +8,13 @@ import { z } from 'zod';
 import { isLocale, LOCALE_COOKIE, LOCALE_MAX_AGE } from '@/i18n/config';
 import { getDict } from '@/i18n/server';
 import { requireUserId } from '@/lib/auth';
-import { toUtcDate } from '@/lib/dates';
+import { toEpochDay, todayUtc, toUtcDate } from '@/lib/dates';
 import { prisma } from '@/lib/prisma';
 
 export interface ActionState {
   error?: string;
+  /** Change à chaque enregistrement réussi : le formulaire s'en sert pour se vider. */
+  savedAt?: number;
 }
 
 export async function setLocale(formData: FormData): Promise<void> {
@@ -144,8 +146,16 @@ export async function saveTrip(_prev: ActionState, formData: FormData): Promise<
   const { id, personId, entryDate, exitDate, ...rest } = parsed.data;
   await assertOwnsPerson(userId, personId);
 
+  // Un séjour à venir ne peut pas être « passé » : on rectifie plutôt que de
+  // stocker un état incohérent que le calcul traiterait quand même.
+  const status =
+    rest.status === 'PAST' && toEpochDay(entryDate) > toEpochDay(todayUtc())
+      ? ('PLANNED' as const)
+      : rest.status;
+
   const data = {
     ...rest,
+    status,
     entryDate: toUtcDate(entryDate),
     exitDate: exitDate ? toUtcDate(exitDate) : null,
   };
@@ -160,7 +170,7 @@ export async function saveTrip(_prev: ActionState, formData: FormData): Promise<
 
   revalidatePath(`/person/${personId}`);
   revalidatePath('/dashboard');
-  return {};
+  return { savedAt: Date.now() };
 }
 
 export async function deleteTrip(formData: FormData): Promise<void> {
@@ -172,4 +182,23 @@ export async function deleteTrip(formData: FormData): Promise<void> {
   await prisma.trip.deleteMany({ where: { id, personId } });
   revalidatePath(`/person/${personId}`);
   revalidatePath('/dashboard');
+}
+
+const alertEmailSchema = z.union([z.string().trim().email(), z.literal('')]);
+
+export async function saveAlertEmail(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const userId = await currentUserId();
+  const parsed = alertEmailSchema.safeParse(formData.get('alertEmail') ?? '');
+  if (!parsed.success) return { error: getDict().errors.emailInvalid };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { alertEmail: parsed.data === '' ? null : parsed.data },
+  });
+
+  revalidatePath('/dashboard');
+  return { savedAt: Date.now() };
 }

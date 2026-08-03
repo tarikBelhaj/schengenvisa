@@ -158,3 +158,26 @@ export function nextPlannedTrip<T extends TripLike>(
 
   return best;
 }
+
+/**
+ * Date à laquelle tous les jours comptés à `referenceDate` seront sortis de la
+ * fenêtre. Un jour D en sort à D + 180. Null si rien n'est compté.
+ */
+export function historyClearDate(
+  trips: readonly TripLike[],
+  referenceDate: DateInput = todayUtc(),
+): Date | null {
+  const refDay = toEpochDay(referenceDate);
+  const windowStart = refDay - (WINDOW_DAYS - 1);
+  let last = -Infinity;
+
+  for (const trip of trips) {
+    const entry = toEpochDay(trip.entryDate);
+    const exit = trip.exitDate == null ? refDay : toEpochDay(trip.exitDate);
+    const to = Math.min(exit, refDay);
+    if (to < Math.max(entry, windowStart)) continue;
+    if (to > last) last = to;
+  }
+
+  return last === -Infinity ? null : fromEpochDay(last + WINDOW_DAYS);
+}
