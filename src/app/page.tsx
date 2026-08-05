@@ -98,7 +98,7 @@ export default async function LandingPage() {
           <div className="order-1 lg:order-2">
             <div className="overflow-hidden rounded-4xl bg-white shadow-float">
               <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-aqua px-6 pb-16 pt-7 text-center">
-                <p className="text-sm text-white/80">Yasmine Haddad</p>
+                <p className="text-sm text-white/80">Mrs. Example</p>
                 <p className="mt-1 text-xs text-white/60">
                   {fmt(dict.common.on, { date: formatDate(demo.reference, locale) })}
                 </p>

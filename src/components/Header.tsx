@@ -10,10 +10,10 @@ export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`flex items-center gap-2.5 ${className}`}>
       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-aqua text-[11px] font-bold text-white">
-        90
+        TT
       </span>
       <span className="text-sm font-semibold tracking-tight text-slate-800">
-        Schengen <span className="text-brand-500">90/180</span>
+        Track <span className="text-brand-500">Trip</span>
       </span>
     </span>
   );

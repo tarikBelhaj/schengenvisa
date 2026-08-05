@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Schengen 90/180",
+  title: "Track Trip",
   description: "Suivi de la règle Schengen 90/180 en fenêtre glissante.",
 };
 

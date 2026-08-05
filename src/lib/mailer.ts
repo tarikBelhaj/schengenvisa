@@ -13,7 +13,7 @@ export async function sendMail(
   const key = process.env.RESEND_API_KEY;
   if (!key) return { sent: false, reason: 'RESEND_API_KEY absente' };
 
-  const from = process.env.ALERT_FROM ?? 'Schengen 90/180 <onboarding@resend.dev>';
+  const from = process.env.ALERT_FROM ?? 'Track Trip <onboarding@resend.dev>';
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
