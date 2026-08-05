@@ -46,34 +46,61 @@ export function personAlert(
   return null;
 }
 
+/** Le motif de l'objet, sans le nom : l'objet bilingue le réutilise. */
+function alertLabel(alert: PersonAlert, locale: 'fr' | 'en'): string {
+  const fr = locale === 'fr';
+  switch (alert.kind) {
+    case 'OVERAGE':
+      return fr ? 'dépassement Schengen' : 'Schengen overstay';
+    case 'DAYS_0':
+      return fr ? 'quota épuisé' : 'quota exhausted';
+    default:
+      return fr ? `${alert.daysLeft} jours restants` : `${alert.daysLeft} days left`;
+  }
+}
+
+function alertBody(name: string, alert: PersonAlert, locale: 'fr' | 'en'): string {
+  const fr = locale === 'fr';
+  switch (alert.kind) {
+    case 'OVERAGE':
+      return fr
+        ? `${name} dépasse de ${-alert.daysLeft} jour(s) le quota de ${MAX_DAYS} jours sur 180.`
+        : `${name} is ${-alert.daysLeft} day(s) over the ${MAX_DAYS}-in-180 limit.`;
+    case 'DAYS_0':
+      return fr
+        ? `${name} a consommé ses ${MAX_DAYS} jours.${alert.onTerritory ? ' La sortie doit avoir lieu aujourd’hui.' : ''}`
+        : `${name} has used all ${MAX_DAYS} days.${alert.onTerritory ? ' Departure must happen today.' : ''}`;
+    default:
+      return fr
+        ? `Il reste ${alert.daysLeft} jour(s) à ${name} dans la fenêtre de 180 jours.${alert.onTerritory ? ' Le séjour est en cours.' : ''}`
+        : `${name} has ${alert.daysLeft} day(s) left in the 180-day window.${alert.onTerritory ? ' The stay is ongoing.' : ''}`;
+  }
+}
+
 /** Message prêt à envoyer, en clair. */
 export function alertText(
   name: string,
   alert: PersonAlert,
   locale: 'fr' | 'en' = 'fr',
 ): { subject: string; body: string } {
-  const fr = locale === 'fr';
-  switch (alert.kind) {
-    case 'OVERAGE':
-      return {
-        subject: fr ? `${name} — dépassement Schengen` : `${name} — Schengen overstay`,
-        body: fr
-          ? `${name} dépasse de ${-alert.daysLeft} jour(s) le quota de ${MAX_DAYS} jours sur 180.`
-          : `${name} is ${-alert.daysLeft} day(s) over the ${MAX_DAYS}-in-180 limit.`,
-      };
-    case 'DAYS_0':
-      return {
-        subject: fr ? `${name} — quota épuisé` : `${name} — quota exhausted`,
-        body: fr
-          ? `${name} a consommé ses ${MAX_DAYS} jours.${alert.onTerritory ? ' La sortie doit avoir lieu aujourd’hui.' : ''}`
-          : `${name} has used all ${MAX_DAYS} days.${alert.onTerritory ? ' Departure must happen today.' : ''}`,
-      };
-    default:
-      return {
-        subject: fr ? `${name} — ${alert.daysLeft} jours restants` : `${name} — ${alert.daysLeft} days left`,
-        body: fr
-          ? `Il reste ${alert.daysLeft} jour(s) à ${name} dans la fenêtre de 180 jours.${alert.onTerritory ? ' Le séjour est en cours.' : ''}`
-          : `${name} has ${alert.daysLeft} day(s) left in the 180-day window.${alert.onTerritory ? ' The stay is ongoing.' : ''}`,
-      };
-  }
+  return {
+    subject: `${name} — ${alertLabel(alert, locale)}`,
+    body: alertBody(name, alert, locale),
+  };
+}
+
+/**
+ * Le même message en français puis en anglais.
+ *
+ * Aucune langue n'est enregistrée par compte : plutôt que de deviner, l'alerte
+ * porte les deux versions, le nom n'étant répété qu'une fois dans l'objet.
+ */
+export function bilingualAlertText(
+  name: string,
+  alert: PersonAlert,
+): { subject: string; body: string } {
+  return {
+    subject: `${name} — ${alertLabel(alert, 'fr')} / ${alertLabel(alert, 'en')}`,
+    body: `${alertBody(name, alert, 'fr')}\n\n—\n\n${alertBody(name, alert, 'en')}`,
+  };
 }

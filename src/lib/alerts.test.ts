@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { alertText, isOnTerritory, personAlert, WARN_DAYS } from './alerts';
+import { alertText, bilingualAlertText, isOnTerritory, personAlert, WARN_DAYS } from './alerts';
 import type { TripLike } from './schengen';
 
 const REF = '2026-06-01';
@@ -71,5 +71,29 @@ describe('alertText', () => {
   it('ne parle pas de sortie quand la personne est hors zone', () => {
     const alert = { kind: 'DAYS_0' as const, daysLeft: 0, onTerritory: false };
     expect(alertText('Karim', alert, 'fr').body).not.toContain("aujourd’hui");
+  });
+});
+
+describe('bilingualAlertText', () => {
+  it('réunit les deux langues dans un seul corps', () => {
+    const alert = { kind: 'DAYS_10' as const, daysLeft: 8, onTerritory: false };
+    const { body } = bilingualAlertText('Karim', alert);
+    expect(body).toContain('Il reste 8 jour(s) à Karim');
+    expect(body).toContain('Karim has 8 day(s) left');
+  });
+
+  it("ne répète pas le nom dans l'objet", () => {
+    const alert = { kind: 'DAYS_10' as const, daysLeft: 8, onTerritory: false };
+    const { subject } = bilingualAlertText('Karim', alert);
+    expect(subject).toBe('Karim — 8 jours restants / 8 days left');
+  });
+
+  it('couvre le dépassement et le quota épuisé', () => {
+    expect(
+      bilingualAlertText('Karim', { kind: 'OVERAGE', daysLeft: -5, onTerritory: true }).subject,
+    ).toBe('Karim — dépassement Schengen / Schengen overstay');
+    expect(
+      bilingualAlertText('Karim', { kind: 'DAYS_0', daysLeft: 0, onTerritory: true }).subject,
+    ).toBe('Karim — quota épuisé / quota exhausted');
   });
 });

@@ -105,6 +105,9 @@ léger, un seul niveau à la fois :
 | `DAYS_0` | quota épuisé, 0 jour restant |
 | `DAYS_10` | 10 jours restants ou moins |
 
+Le message porte les deux langues, français puis anglais, séparées par un tiret
+cadratin : aucune langue n'est enregistrée par compte.
+
 Un envoi déjà effectué est mémorisé (table `SentAlert`) : pas de rappel
 quotidien tant que le niveau ne change pas. Quand la condition retombe, la
 trace est effacée et un futur franchissement redéclenchera l'envoi.

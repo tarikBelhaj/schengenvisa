@@ -1,4 +1,4 @@
-import { alertText, personAlert } from '@/lib/alerts';
+import { bilingualAlertText, personAlert } from '@/lib/alerts';
 import { todayUtc } from '@/lib/dates';
 import { sendMail } from '@/lib/mailer';
 import { prisma } from '@/lib/prisma';
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
       });
       if (already) continue;
 
-      const { subject, body } = alertText(person.name, alert);
+      const { subject, body } = bilingualAlertText(person.name, alert);
       const result = await sendMail(user.alertEmail!, subject, body);
 
       if (!result.sent) {
