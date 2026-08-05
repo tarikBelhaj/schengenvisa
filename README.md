@@ -49,6 +49,9 @@ URI de redirection à déclarer côté Google :
 | `NEXTAUTH_SECRET` | `openssl rand -base64 32` |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | identifiants OAuth |
 | `ALLOWED_EMAILS` | liste blanche `a@x.com,b@y.com`. Vide = tout compte Google |
+| `RESEND_API_KEY` | envoi des alertes. Vide = aucun envoi |
+| `ALERT_FROM` | expéditeur des alertes. Défaut `onboarding@resend.dev` |
+| `CRON_SECRET` | protège `/api/cron/alerts`. Vide = route ouverte |
 | `SEED_USER_EMAIL` | compte auquel rattacher les données de démo |
 
 ## Scripts
@@ -88,6 +91,36 @@ nextPlannedTrip(trips, ref)       // prochain séjour à venir
 ```
 
 Fonctions pures, sans dépendance : le simulateur les exécute côté client.
+
+## Alertes e-mail
+
+Chaque compte peut renseigner une adresse de notification depuis le tableau de
+bord. Un cron Vercel quotidien (7h UTC, déclaré dans `vercel.json`) appelle
+`/api/cron/alerts`, qui parcourt les personnes et envoie, du plus grave au plus
+léger, un seul niveau à la fois :
+
+| Niveau | Déclencheur |
+| --- | --- |
+| `OVERAGE` | quota dépassé |
+| `DAYS_0` | quota épuisé, 0 jour restant |
+| `DAYS_10` | 10 jours restants ou moins |
+
+Un envoi déjà effectué est mémorisé (table `SentAlert`) : pas de rappel
+quotidien tant que le niveau ne change pas. Quand la condition retombe, la
+trace est effacée et un futur franchissement redéclenchera l'envoi.
+
+`CRON_SECRET` doit être défini en production : sans lui, la route est ouverte
+et les envois deviennent déclenchables par n'importe qui. Vercel joint
+automatiquement l'en-tête `Authorization: Bearer <CRON_SECRET>` à ses crons.
+
+Vérification manuelle :
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" <URL>/api/cron/alerts
+```
+
+La réponse compte les envois et liste les échecs, `RESEND_API_KEY absente` en
+tête si la clé manque.
 
 ## Cloisonnement
 
